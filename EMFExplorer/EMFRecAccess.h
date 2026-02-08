@@ -27,6 +27,9 @@ public:
 public:
 	virtual LPCWSTR GetRecordName() const = 0;
 
+	// Additional text associated with the record (e.g. the actual string for text output records)
+	virtual LPCWSTR GetRecordText() const { return nullptr; }
+
 	virtual emfplus::OEmfPlusRecordType GetRecordType() const = 0;
 
 	enum RecCategory

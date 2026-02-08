@@ -441,12 +441,15 @@ public:
 	LPCWSTR GetRecordName() const override { return L"EmfPlusDrawString"; }
 
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfPlusRecordTypeDrawString; }
+
+	LPCWSTR GetRecordText() const override;
 private:
 	void Preprocess(EMFAccess* pEMF) override;
 
 	void CacheProperties(const CachePropertiesContext& ctxt) override;
 private:
 	emfplus::OEmfPlusRecDrawString	m_recDataCached;
+	mutable CStringW m_strText;
 };
 
 class EMFRecAccessGDIPlusRecSetRenderingOrigin : public EMFRecAccessGDIPlusPropertyCat
@@ -735,12 +738,15 @@ public:
 	LPCWSTR GetRecordName() const override { return L"EmfPlusDrawDriverString"; }
 
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfPlusRecordTypeDrawDriverString; }
+
+	LPCWSTR GetRecordText() const override;
 private:
 	void Preprocess(EMFAccess* pEMF) override;
 
 	void CacheProperties(const CachePropertiesContext& ctxt) override;
 private:
 	emfplus::OEmfPlusRecDrawDriverString	m_recDataCached;
+	mutable CStringW m_strText;
 };
 
 class EMFRecAccessGDIPlusRecStrokeFillPath : public EMFRecAccessGDIPlusDrawingCat

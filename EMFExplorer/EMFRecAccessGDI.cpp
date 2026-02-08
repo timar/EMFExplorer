@@ -444,6 +444,20 @@ void EMFRecAccessGDIRecExtCreateFontIndirect::CacheProperties(const CachePropert
 	}
 }
 
+LPCWSTR EMFRecAccessGDIRecExtTextOutA::GetRecordText() const
+{
+	if (m_strText.IsEmpty())
+	{
+		auto pRec = (const EMREXTTEXTOUTA*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
+		if (pRec && pRec->emrtext.nChars > 0 && pRec->emrtext.offString)
+		{
+			LPCSTR pszText = (LPCSTR)((const BYTE*)pRec + pRec->emrtext.offString);
+			m_strText = CStringW(pszText, pRec->emrtext.nChars);
+		}
+	}
+	return m_strText.IsEmpty() ? nullptr : (LPCWSTR)m_strText;
+}
+
 void EMFRecAccessGDIRecExtTextOutA::CacheProperties(const CachePropertiesContext& ctxt)
 {
 	EMFRecAccessGDIDrawingCat::CacheProperties(ctxt);
@@ -451,7 +465,24 @@ void EMFRecAccessGDIRecExtTextOutA::CacheProperties(const CachePropertiesContext
 	if (pRec)
 	{
 		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		auto pszText = GetRecordText();
+		if (pszText)
+			m_propsCached->AddText(L"Text", pszText);
 	}
+}
+
+LPCWSTR EMFRecAccessGDIRecExtTextOutW::GetRecordText() const
+{
+	if (m_strText.IsEmpty())
+	{
+		auto pRec = (const EMREXTTEXTOUTW*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
+		if (pRec && pRec->emrtext.nChars > 0 && pRec->emrtext.offString)
+		{
+			LPCWSTR pszText = (LPCWSTR)((const BYTE*)pRec + pRec->emrtext.offString);
+			m_strText.SetString(pszText, pRec->emrtext.nChars);
+		}
+	}
+	return m_strText.IsEmpty() ? nullptr : (LPCWSTR)m_strText;
 }
 
 void EMFRecAccessGDIRecExtTextOutW::CacheProperties(const CachePropertiesContext& ctxt)
@@ -461,6 +492,9 @@ void EMFRecAccessGDIRecExtTextOutW::CacheProperties(const CachePropertiesContext
 	if (pRec)
 	{
 		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		auto pszText = GetRecordText();
+		if (pszText)
+			m_propsCached->AddText(L"Text", pszText);
 	}
 }
 
@@ -1331,6 +1365,29 @@ void EMFRecAccessGDIRecPolyDraw16::CacheProperties(const CachePropertiesContext&
 	}
 }
 
+LPCWSTR EMFRecAccessGDIRecPolyTextOutA::GetRecordText() const
+{
+	if (m_strText.IsEmpty())
+	{
+		auto pRec = (const EMRPOLYTEXTOUTA*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
+		if (pRec)
+		{
+			for (LONG ii = 0; ii < pRec->cStrings; ++ii)
+			{
+				auto& emt = pRec->aemrtext[ii];
+				if (emt.nChars > 0 && emt.offString)
+				{
+					if (!m_strText.IsEmpty())
+						m_strText += L' ';
+					LPCSTR pszText = (LPCSTR)((const BYTE*)pRec + emt.offString);
+					m_strText += CStringW(pszText, emt.nChars);
+				}
+			}
+		}
+	}
+	return m_strText.IsEmpty() ? nullptr : (LPCWSTR)m_strText;
+}
+
 void EMFRecAccessGDIRecPolyTextOutA::CacheProperties(const CachePropertiesContext& ctxt)
 {
 	EMFRecAccessGDIDrawingCat::CacheProperties(ctxt);
@@ -1338,7 +1395,33 @@ void EMFRecAccessGDIRecPolyTextOutA::CacheProperties(const CachePropertiesContex
 	if (pRec)
 	{
 		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		auto pszText = GetRecordText();
+		if (pszText)
+			m_propsCached->AddText(L"Text", pszText);
 	}
+}
+
+LPCWSTR EMFRecAccessGDIRecPolyTextOutW::GetRecordText() const
+{
+	if (m_strText.IsEmpty())
+	{
+		auto pRec = (const EMRPOLYTEXTOUTW*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
+		if (pRec)
+		{
+			for (LONG ii = 0; ii < pRec->cStrings; ++ii)
+			{
+				auto& emt = pRec->aemrtext[ii];
+				if (emt.nChars > 0 && emt.offString)
+				{
+					if (!m_strText.IsEmpty())
+						m_strText += L' ';
+					LPCWSTR pszText = (LPCWSTR)((const BYTE*)pRec + emt.offString);
+					m_strText += CStringW(pszText, emt.nChars);
+				}
+			}
+		}
+	}
+	return m_strText.IsEmpty() ? nullptr : (LPCWSTR)m_strText;
 }
 
 void EMFRecAccessGDIRecPolyTextOutW::CacheProperties(const CachePropertiesContext& ctxt)
@@ -1348,6 +1431,69 @@ void EMFRecAccessGDIRecPolyTextOutW::CacheProperties(const CachePropertiesContex
 	if (pRec)
 	{
 		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		auto pszText = GetRecordText();
+		if (pszText)
+			m_propsCached->AddText(L"Text", pszText);
+	}
+}
+
+// EMR_SMALLTEXTOUT (record type 108) - undocumented structure
+struct EMRSMALLTEXTOUT_HEADER
+{
+	EMR     emr;
+	LONG    x;
+	LONG    y;
+	UINT    cChars;
+	UINT    fuOptions;
+	UINT    iGraphicsMode;
+	FLOAT   exScale;
+	FLOAT   eyScale;
+	// RECTL rclBounds follows if (fuOptions & (ETO_CLIPPED | ETO_OPAQUE))
+	// then the text data
+};
+#define ETO_SMALL_CHARS 0x200
+
+static const void* SmallTextOutGetTextPtr(const EMRSMALLTEXTOUT_HEADER* pRec)
+{
+	auto p = (const BYTE*)(pRec + 1);
+	if (pRec->fuOptions & (ETO_CLIPPED | ETO_OPAQUE))
+		p += sizeof(RECTL);
+	return p;
+}
+
+LPCWSTR EMFRecAccessGDIRecSmallTextOut::GetRecordText() const
+{
+	if (m_strText.IsEmpty())
+	{
+		auto pRec = (const EMRSMALLTEXTOUT_HEADER*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
+		if (pRec && pRec->cChars > 0)
+		{
+			auto pText = SmallTextOutGetTextPtr(pRec);
+			if (pRec->fuOptions & ETO_SMALL_CHARS)
+				m_strText = CStringW((LPCSTR)pText, pRec->cChars);
+			else
+				m_strText.SetString((LPCWSTR)pText, pRec->cChars);
+		}
+	}
+	return m_strText.IsEmpty() ? nullptr : (LPCWSTR)m_strText;
+}
+
+void EMFRecAccessGDIRecSmallTextOut::CacheProperties(const CachePropertiesContext& ctxt)
+{
+	EMFRecAccessGDIDrawingCat::CacheProperties(ctxt);
+	auto pRec = (const EMRSMALLTEXTOUT_HEADER*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
+	if (pRec)
+	{
+		m_propsCached->AddValue(L"x", pRec->x);
+		m_propsCached->AddValue(L"y", pRec->y);
+		m_propsCached->AddValue(L"cChars", pRec->cChars);
+		m_propsCached->AddValue(L"fuOptions", pRec->fuOptions, true);
+		m_propsCached->AddValue(L"iGraphicsMode", pRec->iGraphicsMode);
+		m_propsCached->AddValue(L"exScale", pRec->exScale);
+		m_propsCached->AddValue(L"eyScale", pRec->eyScale);
+		auto pszText = GetRecordText();
+		if (pszText)
+			m_propsCached->AddText(L"Text", pszText);
 	}
 }
 

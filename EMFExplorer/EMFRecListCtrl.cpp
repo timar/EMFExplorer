@@ -462,8 +462,12 @@ void CEMFRecListCtrl::GetDispItemText(LVITEM& item) const
 		break;
 	case ColumnTypeName:
 		{
-			auto szText = pRec->GetRecordName();
-			_tcsncpy_s(item.pszText, item.cchTextMax, szText, item.cchTextMax);
+			auto szName = pRec->GetRecordName();
+			auto szRecText = pRec->GetRecordText();
+			if (szRecText)
+				_sntprintf_s(item.pszText, item.cchTextMax, item.cchTextMax, _T("%s: %s"), szName, szRecText);
+			else
+				_tcsncpy_s(item.pszText, item.cchTextMax, szName, item.cchTextMax);
 		}
 		break;
 	}

@@ -1125,6 +1125,21 @@ void EMFRecAccessGDIPlusRecDrawString::Preprocess(EMFAccess* pEMF)
 	}
 }
 
+LPCWSTR EMFRecAccessGDIPlusRecDrawString::GetRecordText() const
+{
+	if (m_strText.IsEmpty() && m_recInfo.Data && m_recInfo.DataSize > 0)
+	{
+		DataReader reader(m_recInfo.Data, m_recInfo.DataSize);
+		emfplus::OEmfPlusRecDrawString recData;
+		if (recData.Read(reader, m_recInfo.Flags, m_recInfo.DataSize))
+		{
+			if (!recData.StringData.empty())
+				m_strText.SetString(recData.StringData.data(), (int)recData.StringData.size());
+		}
+	}
+	return m_strText.IsEmpty() ? nullptr : (LPCWSTR)m_strText;
+}
+
 void EMFRecAccessGDIPlusRecDrawString::CacheProperties(const CachePropertiesContext& ctxt)
 {
 	EMFRecAccessGDIPlusDrawingCat::CacheProperties(ctxt);
@@ -1187,6 +1202,25 @@ void EMFRecAccessGDIPlusRecDrawDriverString::Preprocess(EMFAccess* pEMF)
 	}
 }
 
+LPCWSTR EMFRecAccessGDIPlusRecDrawDriverString::GetRecordText() const
+{
+	if (m_strText.IsEmpty() && m_recInfo.Data && m_recInfo.DataSize > 0)
+	{
+		DataReader reader(m_recInfo.Data, m_recInfo.DataSize);
+		emfplus::OEmfPlusRecDrawDriverString recData;
+		if (recData.Read(reader, m_recInfo.Flags, m_recInfo.DataSize))
+		{
+			if (!recData.Glyphs.empty() &&
+				((u32t)ODriverStringOptions::CmapLookup & recData.DriverStringOptionsFlags))
+			{
+				for (auto glyph : recData.Glyphs)
+					m_strText += (wchar_t)glyph;
+			}
+		}
+	}
+	return m_strText.IsEmpty() ? nullptr : (LPCWSTR)m_strText;
+}
+
 void EMFRecAccessGDIPlusRecDrawDriverString::CacheProperties(const CachePropertiesContext& ctxt)
 {
 	EMFRecAccessGDIPlusDrawingCat::CacheProperties(ctxt);
@@ -1219,16 +1253,14 @@ void EMFRecAccessGDIPlusRecDrawDriverString::CacheProperties(const CacheProperti
 	}
 	m_propsCached->AddValue(L"DriverStringOptionsFlags", m_recDataCached.DriverStringOptionsFlags, true);
 	m_propsCached->AddValue(L"MatrixPresent", m_recDataCached.MatrixPresent);
-	// TODO, Glyphs, GlyphPos
 	if (!m_recDataCached.Glyphs.empty())
 	{
 		if ((u32t)ODriverStringOptions::CmapLookup & m_recDataCached.DriverStringOptionsFlags)
 		{
 			m_propsCached->sub.emplace_back(std::make_shared<PropertyNodeArray>(L"Glyphs", m_recDataCached.Glyphs));
-		}
-		else
-		{
-
+			auto pszText = GetRecordText();
+			if (pszText)
+				m_propsCached->AddText(L"Text", pszText);
 		}
 	}
 	if (!m_recDataCached.GlyphPos.empty())

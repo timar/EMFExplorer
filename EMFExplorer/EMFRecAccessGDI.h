@@ -935,8 +935,11 @@ public:
 	LPCWSTR GetRecordName() const override { return L"EMR_EXTTEXTOUTA"; }
 
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfRecordTypeExtTextOutA; }
+
+	LPCWSTR GetRecordText() const override;
 private:
 	void CacheProperties(const CachePropertiesContext& ctxt) override;
+	mutable CStringW m_strText;
 };
 
 class EMFRecAccessGDIRecExtTextOutW : public EMFRecAccessGDIDrawingCat
@@ -945,8 +948,11 @@ public:
 	LPCWSTR GetRecordName() const override { return L"EMR_EXTTEXTOUTW"; }
 
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfRecordTypeExtTextOutW; }
+
+	LPCWSTR GetRecordText() const override;
 private:
 	void CacheProperties(const CachePropertiesContext& ctxt) override;
+	mutable CStringW m_strText;
 };
 
 class EMFRecAccessGDIRecPolyBezier16 : public EMFRecAccessGDIDrawingCat
@@ -1071,8 +1077,11 @@ public:
 	LPCWSTR GetRecordName() const override { return L"EMR_POLYTEXTOUTA"; }
 
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfRecordTypePolyTextOutA; }
+
+	LPCWSTR GetRecordText() const override;
 private:
 	void CacheProperties(const CachePropertiesContext& ctxt) override;
+	mutable CStringW m_strText;
 };
 
 class EMFRecAccessGDIRecPolyTextOutW : public EMFRecAccessGDIDrawingCat
@@ -1081,8 +1090,11 @@ public:
 	LPCWSTR GetRecordName() const override { return L"EMR_POLYTEXTOUTW"; }
 
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfRecordTypePolyTextOutW; }
+
+	LPCWSTR GetRecordText() const override;
 private:
 	void CacheProperties(const CachePropertiesContext& ctxt) override;
+	mutable CStringW m_strText;
 };
 
 class EMFRecAccessGDIRecSetICMMode : public EMFRecAccessGDIStateCat
@@ -1189,6 +1201,11 @@ public:
 	LPCWSTR GetRecordName() const override { return L"EMR_RESERVED_108/EMR_SMALLTEXTOUT"; }
 
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfRecordTypeSmallTextOut; }
+
+	LPCWSTR GetRecordText() const override;
+private:
+	void CacheProperties(const CachePropertiesContext& ctxt) override;
+	mutable CStringW m_strText;
 };
 
 class EMFRecAccessGDIRecForceUFIMapping : public EMFRecAccessGDIStateCat
