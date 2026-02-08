@@ -1438,9 +1438,10 @@ void EMFRecAccessGDIRecPolyTextOutW::CacheProperties(const CachePropertiesContex
 }
 
 // EMR_SMALLTEXTOUT (record type 108) - undocumented structure
-struct EMRSMALLTEXTOUT_HEADER
+// Data layout (after EMR header): x, y, cChars, fuOptions, iGraphicsMode, exScale, eyScale,
+// rclBounds (always present), then text data
+struct EMRSMALLTEXTOUT_DATA
 {
-	EMR     emr;
 	LONG    x;
 	LONG    y;
 	UINT    cChars;
@@ -1448,31 +1449,64 @@ struct EMRSMALLTEXTOUT_HEADER
 	UINT    iGraphicsMode;
 	FLOAT   exScale;
 	FLOAT   eyScale;
-	// RECTL rclBounds follows if (fuOptions & (ETO_CLIPPED | ETO_OPAQUE))
-	// then the text data
+	RECTL   rclBounds;
 };
 #define ETO_SMALL_CHARS 0x200
 
-static const void* SmallTextOutGetTextPtr(const EMRSMALLTEXTOUT_HEADER* pRec)
+static CStringW SmallTextOutOptionsText(UINT fuOptions)
 {
-	auto p = (const BYTE*)(pRec + 1);
-	if (pRec->fuOptions & (ETO_CLIPPED | ETO_OPAQUE))
-		p += sizeof(RECTL);
-	return p;
+	CStringW str;
+	str.Format(L"0x%08X", fuOptions);
+	CStringW flags;
+	if (fuOptions & ETO_OPAQUE)		flags += L"ETO_OPAQUE";
+	if (fuOptions & ETO_CLIPPED)	{ if (!flags.IsEmpty()) flags += L" | "; flags += L"ETO_CLIPPED"; }
+	if (fuOptions & ETO_GLYPH_INDEX){ if (!flags.IsEmpty()) flags += L" | "; flags += L"ETO_GLYPH_INDEX"; }
+	if (fuOptions & ETO_RTLREADING)	{ if (!flags.IsEmpty()) flags += L" | "; flags += L"ETO_RTLREADING"; }
+	if (fuOptions & ETO_SMALL_CHARS){ if (!flags.IsEmpty()) flags += L" | "; flags += L"ETO_SMALL_CHARS (ANSI)"; }
+	if (fuOptions & ETO_PDY)		{ if (!flags.IsEmpty()) flags += L" | "; flags += L"ETO_PDY"; }
+	if (!flags.IsEmpty())
+	{
+		str += L"  ";
+		str += flags;
+	}
+	if (!(fuOptions & ETO_SMALL_CHARS))
+	{
+		if (!flags.IsEmpty()) str += L" | ";
+		else str += L"  ";
+		str += L"Unicode";
+	}
+	return str;
+}
+
+static CStringW GraphicsModeText(UINT iGraphicsMode)
+{
+	CStringW str;
+	str.Format(L"%u", iGraphicsMode);
+	if (iGraphicsMode == GM_COMPATIBLE)
+		str += L"  GM_COMPATIBLE";
+	else if (iGraphicsMode == GM_ADVANCED)
+		str += L"  GM_ADVANCED";
+	return str;
 }
 
 LPCWSTR EMFRecAccessGDIRecSmallTextOut::GetRecordText() const
 {
-	if (m_strText.IsEmpty())
+	if (m_strText.IsEmpty() && m_recInfo.Data && m_recInfo.DataSize >= sizeof(EMRSMALLTEXTOUT_DATA))
 	{
-		auto pRec = (const EMRSMALLTEXTOUT_HEADER*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
-		if (pRec && pRec->cChars > 0)
+		auto pRec = (const EMRSMALLTEXTOUT_DATA*)m_recInfo.Data;
+		if (pRec->cChars > 0)
 		{
-			auto pText = SmallTextOutGetTextPtr(pRec);
+			auto pText = m_recInfo.Data + sizeof(EMRSMALLTEXTOUT_DATA);
 			if (pRec->fuOptions & ETO_SMALL_CHARS)
-				m_strText = CStringW((LPCSTR)pText, pRec->cChars);
+			{
+				if (sizeof(EMRSMALLTEXTOUT_DATA) + pRec->cChars <= m_recInfo.DataSize)
+					m_strText = CStringW((LPCSTR)pText, pRec->cChars);
+			}
 			else
-				m_strText.SetString((LPCWSTR)pText, pRec->cChars);
+			{
+				if (sizeof(EMRSMALLTEXTOUT_DATA) + pRec->cChars * sizeof(WCHAR) <= m_recInfo.DataSize)
+					m_strText.SetString((LPCWSTR)pText, pRec->cChars);
+			}
 		}
 	}
 	return m_strText.IsEmpty() ? nullptr : (LPCWSTR)m_strText;
@@ -1481,14 +1515,14 @@ LPCWSTR EMFRecAccessGDIRecSmallTextOut::GetRecordText() const
 void EMFRecAccessGDIRecSmallTextOut::CacheProperties(const CachePropertiesContext& ctxt)
 {
 	EMFRecAccessGDIDrawingCat::CacheProperties(ctxt);
-	auto pRec = (const EMRSMALLTEXTOUT_HEADER*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
-	if (pRec)
+	if (m_recInfo.Data && m_recInfo.DataSize >= sizeof(EMRSMALLTEXTOUT_DATA))
 	{
+		auto pRec = (const EMRSMALLTEXTOUT_DATA*)m_recInfo.Data;
 		m_propsCached->AddValue(L"x", pRec->x);
 		m_propsCached->AddValue(L"y", pRec->y);
 		m_propsCached->AddValue(L"cChars", pRec->cChars);
-		m_propsCached->AddValue(L"fuOptions", pRec->fuOptions, true);
-		m_propsCached->AddValue(L"iGraphicsMode", pRec->iGraphicsMode);
+		m_propsCached->AddText(L"fuOptions", SmallTextOutOptionsText(pRec->fuOptions));
+		m_propsCached->AddText(L"iGraphicsMode", GraphicsModeText(pRec->iGraphicsMode));
 		m_propsCached->AddValue(L"exScale", pRec->exScale);
 		m_propsCached->AddValue(L"eyScale", pRec->eyScale);
 		auto pszText = GetRecordText();

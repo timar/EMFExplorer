@@ -1198,7 +1198,7 @@ public:
 class EMFRecAccessGDIRecSmallTextOut : public EMFRecAccessGDIDrawingCat
 {
 public:
-	LPCWSTR GetRecordName() const override { return L"EMR_RESERVED_108/EMR_SMALLTEXTOUT"; }
+	LPCWSTR GetRecordName() const override { return L"EMR_SMALLTEXTOUT"; }
 
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfRecordTypeSmallTextOut; }
 

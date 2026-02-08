@@ -642,8 +642,10 @@ int CEMFRecListCtrl::FindRecord(LPCWSTR str, int nStart)
 	{
 		auto pRec = m_emf->GetRecord((size_t)ii);
 		auto szName = pRec->GetRecordName();
-		auto szFind = StrStrIW(szName, str);
-		if (szFind)
+		if (StrStrIW(szName, str))
+			return ii;
+		auto szText = pRec->GetRecordText();
+		if (szText && StrStrIW(szText, str))
 			return ii;
 	}
 	return -1;
