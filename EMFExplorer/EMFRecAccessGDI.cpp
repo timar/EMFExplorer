@@ -558,6 +558,17 @@ void EMFRecAccessGDIRecExtCreatePen::Preprocess(EMFAccess* pEMF)
 	pEMF->SetObjectToTable(pRec->ihPen, this, false);
 }
 
+bool EMFRecAccessGDIRecExtCreatePen::GetRecordColor(COLORREF& cr) const
+{
+	auto pRec = (const EMREXTCREATEPEN*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
+	if (pRec)
+	{
+		cr = pRec->elp.elpColor;
+		return true;
+	}
+	return false;
+}
+
 void EMFRecAccessGDIRecExtCreatePen::CacheProperties(const CachePropertiesContext& ctxt)
 {
 	EMFRecAccessGDIObjectCat::CacheProperties(ctxt);
