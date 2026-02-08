@@ -235,7 +235,7 @@ struct PropertyNodeArray : public PropertyNode
 	NodeType	GetNodeType() const override { return NodeTypeArray; }
 	const void*	data = nullptr;
 	size_t		size = 0;
-	ElemType	elem_type;
+	ElemType	elem_type = ElemTypeUnknown;
 };
 
 struct PropertyNodePlusPointDataArray : public PropertyNodeArray

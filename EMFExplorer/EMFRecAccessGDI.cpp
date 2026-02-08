@@ -8,6 +8,27 @@
 #undef min
 #undef max
 
+// Forward declarations for enum/flag text helpers
+static CStringW MapModeText(DWORD iMode);
+static CStringW BkModeText(DWORD iMode);
+static CStringW PolyFillModeText(DWORD iMode);
+static CStringW ROP2Text(DWORD iMode);
+static CStringW StretchBltModeText(DWORD iMode);
+static CStringW TextAlignText(DWORD iMode);
+static CStringW ArcDirectionText(DWORD iArcDirection);
+static CStringW RegionModeText(DWORD iMode);
+static CStringW ModifyWorldTransformModeText(DWORD iMode);
+static CStringW FloodFillModeText(DWORD iMode);
+static CStringW GradientFillModeText(DWORD ulMode);
+static CStringW BrushStyleText(DWORD lbStyle);
+static CStringW HatchStyleText(DWORD lbHatch);
+static CStringW PenStyleText(DWORD lopnStyle);
+static CStringW ExtPenStyleText(DWORD elpPenStyle);
+static CStringW FontWeightText(LONG lfWeight);
+static CStringW CharSetText(BYTE lfCharSet);
+static CStringW FontQualityText(BYTE lfQuality);
+static CStringW GraphicsModeText(UINT iGraphicsMode);
+
 const ENHMETARECORD* EMFRecAccessGDIRec::GetGDIRecord(const emfplus::OEmfPlusRecInfo& rec)
 {
 	if (rec.Data)
@@ -146,7 +167,12 @@ void EMFRecAccessGDIRecCreatePen::CacheProperties(const CachePropertiesContext& 
 	auto pRec = (EMRCREATEPEN*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
 	if (pRec)
 	{
-		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		m_propsCached->AddValue(L"ihPen", pRec->ihPen);
+		auto pBranch = m_propsCached->AddBranch(L"lopn");
+		pBranch->AddText(L"lopnStyle", PenStyleText(pRec->lopn.lopnStyle));
+		EmfStruct2Properties::BuildField("lopnWidth", pRec->lopn.lopnWidth, pBranch.get());
+		pBranch->sub.emplace_back(std::make_shared<PropertyNodeColor>(L"lopnColor",
+			emfplus::OEmfPlusARGB::FromCOLORREF(pRec->lopn.lopnColor)));
 	}
 }
 
@@ -173,7 +199,15 @@ void EMFRecAccessGDIRecCreateBrushIndirect::CacheProperties(const CachePropertie
 	auto pRec = (EMRCREATEBRUSHINDIRECT*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
 	if (pRec)
 	{
-		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		m_propsCached->AddValue(L"ihBrush", pRec->ihBrush);
+		auto pBranch = m_propsCached->AddBranch(L"lb");
+		pBranch->AddText(L"lbStyle", BrushStyleText(pRec->lb.lbStyle));
+		pBranch->sub.emplace_back(std::make_shared<PropertyNodeColor>(L"lbColor",
+			emfplus::OEmfPlusARGB::FromCOLORREF(pRec->lb.lbColor)));
+		if (pRec->lb.lbStyle == BS_HATCHED)
+			pBranch->AddText(L"lbHatch", HatchStyleText((DWORD)pRec->lb.lbHatch));
+		else
+			pBranch->AddValue(L"lbHatch", (DWORD)pRec->lb.lbHatch);
 	}
 }
 
@@ -462,7 +496,31 @@ void EMFRecAccessGDIRecExtCreateFontIndirect::CacheProperties(const CachePropert
 	auto pRec = (EMREXTCREATEFONTINDIRECTW*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
 	if (pRec)
 	{
-		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		m_propsCached->AddValue(L"ihFont", pRec->ihFont);
+		auto pElfw = m_propsCached->AddBranch(L"elfw");
+		auto& lf = pRec->elfw.elfLogFont;
+		auto pLf = pElfw->AddBranch(L"elfLogFont");
+		pLf->AddValue(L"lfHeight", lf.lfHeight);
+		pLf->AddValue(L"lfWidth", lf.lfWidth);
+		pLf->AddValue(L"lfEscapement", lf.lfEscapement);
+		pLf->AddValue(L"lfOrientation", lf.lfOrientation);
+		pLf->AddText(L"lfWeight", FontWeightText(lf.lfWeight));
+		pLf->AddValue(L"lfItalic", lf.lfItalic);
+		pLf->AddValue(L"lfUnderline", lf.lfUnderline);
+		pLf->AddValue(L"lfStrikeOut", lf.lfStrikeOut);
+		pLf->AddText(L"lfCharSet", CharSetText(lf.lfCharSet));
+		pLf->AddValue(L"lfOutPrecision", lf.lfOutPrecision);
+		pLf->AddValue(L"lfClipPrecision", lf.lfClipPrecision);
+		pLf->AddText(L"lfQuality", FontQualityText(lf.lfQuality));
+		pLf->AddValue(L"lfPitchAndFamily", lf.lfPitchAndFamily);
+		pLf->AddText(L"lfFaceName", lf.lfFaceName);
+		pElfw->AddText(L"elfFullName", pRec->elfw.elfFullName);
+		pElfw->AddText(L"elfStyle", pRec->elfw.elfStyle);
+		pElfw->AddValue(L"elfVersion", pRec->elfw.elfVersion);
+		pElfw->AddValue(L"elfStyleSize", pRec->elfw.elfStyleSize);
+		pElfw->AddValue(L"elfMatch", pRec->elfw.elfMatch);
+		pElfw->AddValue(L"elfCulture", pRec->elfw.elfCulture);
+		EmfStruct2Properties::BuildField("elfPanose", pRec->elfw.elfPanose, pElfw.get());
 	}
 }
 
@@ -486,7 +544,11 @@ void EMFRecAccessGDIRecExtTextOutA::CacheProperties(const CachePropertiesContext
 	auto pRec = (EMREXTTEXTOUTA*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
 	if (pRec)
 	{
-		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		m_propsCached->sub.emplace_back(std::make_shared<PropertyNodeRectInt>(L"rclBounds", pRec->rclBounds));
+		m_propsCached->AddText(L"iGraphicsMode", GraphicsModeText(pRec->iGraphicsMode));
+		m_propsCached->AddValue(L"exScale", pRec->exScale);
+		m_propsCached->AddValue(L"eyScale", pRec->eyScale);
+		EmfStruct2Properties::BuildField("emrtext", pRec->emrtext, m_propsCached.get());
 		auto pszText = GetRecordText();
 		if (pszText)
 			m_propsCached->AddText(L"Text", pszText);
@@ -513,7 +575,11 @@ void EMFRecAccessGDIRecExtTextOutW::CacheProperties(const CachePropertiesContext
 	auto pRec = (EMREXTTEXTOUTW*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
 	if (pRec)
 	{
-		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		m_propsCached->sub.emplace_back(std::make_shared<PropertyNodeRectInt>(L"rclBounds", pRec->rclBounds));
+		m_propsCached->AddText(L"iGraphicsMode", GraphicsModeText(pRec->iGraphicsMode));
+		m_propsCached->AddValue(L"exScale", pRec->exScale);
+		m_propsCached->AddValue(L"eyScale", pRec->eyScale);
+		EmfStruct2Properties::BuildField("emrtext", pRec->emrtext, m_propsCached.get());
 		auto pszText = GetRecordText();
 		if (pszText)
 			m_propsCached->AddText(L"Text", pszText);
@@ -575,7 +641,22 @@ void EMFRecAccessGDIRecExtCreatePen::CacheProperties(const CachePropertiesContex
 	auto pRec = (EMREXTCREATEPEN*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
 	if (pRec)
 	{
-		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		m_propsCached->AddValue(L"ihPen", pRec->ihPen);
+		m_propsCached->AddValue(L"offBmi", pRec->offBmi);
+		m_propsCached->AddValue(L"cbBmi", pRec->cbBmi);
+		m_propsCached->AddValue(L"offBits", pRec->offBits);
+		m_propsCached->AddValue(L"cbBits", pRec->cbBits);
+		auto pBranch = m_propsCached->AddBranch(L"elp");
+		pBranch->AddText(L"elpPenStyle", ExtPenStyleText(pRec->elp.elpPenStyle));
+		pBranch->AddValue(L"elpWidth", pRec->elp.elpWidth);
+		pBranch->AddText(L"elpBrushStyle", BrushStyleText(pRec->elp.elpBrushStyle));
+		pBranch->sub.emplace_back(std::make_shared<PropertyNodeColor>(L"elpColor",
+			emfplus::OEmfPlusARGB::FromCOLORREF(pRec->elp.elpColor)));
+		if (pRec->elp.elpBrushStyle == BS_HATCHED)
+			pBranch->AddText(L"elpHatch", HatchStyleText((DWORD)pRec->elp.elpHatch));
+		else
+			pBranch->AddValue(L"elpHatch", (DWORD)pRec->elp.elpHatch);
+		pBranch->AddValue(L"elpNumEntries", pRec->elp.elpNumEntries);
 	}
 }
 
@@ -944,7 +1025,7 @@ void EMFRecAccessGDIRecSetMapMode::CacheProperties(const CachePropertiesContext&
 	auto pRec = (EMRSETMAPMODE*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
 	if (pRec)
 	{
-		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		m_propsCached->AddText(L"iMode", MapModeText(pRec->iMode));
 	}
 }
 
@@ -954,7 +1035,7 @@ void EMFRecAccessGDIRecSetBkMode::CacheProperties(const CachePropertiesContext& 
 	auto pRec = (EMRSETBKMODE*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
 	if (pRec)
 	{
-		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		m_propsCached->AddText(L"iMode", BkModeText(pRec->iMode));
 	}
 }
 
@@ -964,7 +1045,7 @@ void EMFRecAccessGDIRecSetPolyFillMode::CacheProperties(const CachePropertiesCon
 	auto pRec = (EMRSETPOLYFILLMODE*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
 	if (pRec)
 	{
-		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		m_propsCached->AddText(L"iMode", PolyFillModeText(pRec->iMode));
 	}
 }
 
@@ -974,7 +1055,7 @@ void EMFRecAccessGDIRecSetROP2::CacheProperties(const CachePropertiesContext& ct
 	auto pRec = (EMRSETROP2*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
 	if (pRec)
 	{
-		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		m_propsCached->AddText(L"iMode", ROP2Text(pRec->iMode));
 	}
 }
 
@@ -984,7 +1065,7 @@ void EMFRecAccessGDIRecSetStretchBltMode::CacheProperties(const CachePropertiesC
 	auto pRec = (EMRSETSTRETCHBLTMODE*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
 	if (pRec)
 	{
-		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		m_propsCached->AddText(L"iMode", StretchBltModeText(pRec->iMode));
 	}
 }
 
@@ -994,7 +1075,7 @@ void EMFRecAccessGDIRecSetTextAlign::CacheProperties(const CachePropertiesContex
 	auto pRec = (EMRSETTEXTALIGN*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
 	if (pRec)
 	{
-		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		m_propsCached->AddText(L"iMode", TextAlignText(pRec->iMode));
 	}
 }
 
@@ -1114,7 +1195,8 @@ void EMFRecAccessGDIRecModifyWorldTransform::CacheProperties(const CacheProperti
 	auto pRec = (EMRMODIFYWORLDTRANSFORM*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
 	if (pRec)
 	{
-		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		EmfStruct2Properties::BuildField("xform", pRec->xform, m_propsCached.get());
+		m_propsCached->AddText(L"iMode", ModifyWorldTransformModeText(pRec->iMode));
 	}
 }
 
@@ -1194,7 +1276,10 @@ void EMFRecAccessGDIRecExtFloodFill::CacheProperties(const CachePropertiesContex
 	auto pRec = (EMREXTFLOODFILL*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
 	if (pRec)
 	{
-		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		EmfStruct2Properties::BuildField("ptlStart", pRec->ptlStart, m_propsCached.get());
+		m_propsCached->sub.emplace_back(std::make_shared<PropertyNodeColor>(L"crColor",
+			emfplus::OEmfPlusARGB::FromCOLORREF(pRec->crColor)));
+		m_propsCached->AddText(L"iMode", FloodFillModeText(pRec->iMode));
 	}
 }
 
@@ -1234,7 +1319,7 @@ void EMFRecAccessGDIRecSetArcDirection::CacheProperties(const CachePropertiesCon
 	auto pRec = (EMRSETARCDIRECTION*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
 	if (pRec)
 	{
-		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		m_propsCached->AddText(L"iArcDirection", ArcDirectionText(pRec->iArcDirection));
 	}
 }
 
@@ -1284,7 +1369,7 @@ void EMFRecAccessGDIRecSelectClipPath::CacheProperties(const CachePropertiesCont
 	auto pRec = (EMRSELECTCLIPPATH*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
 	if (pRec)
 	{
-		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		m_propsCached->AddText(L"iMode", RegionModeText(pRec->iMode));
 	}
 }
 
@@ -1334,7 +1419,8 @@ void EMFRecAccessGDIRecExtSelectClipRgn::CacheProperties(const CachePropertiesCo
 	auto pRec = (EMREXTSELECTCLIPRGN*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
 	if (pRec)
 	{
-		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		m_propsCached->AddValue(L"cbRgnData", pRec->cbRgnData);
+		m_propsCached->AddText(L"iMode", RegionModeText(pRec->iMode));
 	}
 }
 
@@ -1447,7 +1533,11 @@ void EMFRecAccessGDIRecPolyTextOutA::CacheProperties(const CachePropertiesContex
 	auto pRec = (EMRPOLYTEXTOUTA*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
 	if (pRec)
 	{
-		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		m_propsCached->sub.emplace_back(std::make_shared<PropertyNodeRectInt>(L"rclBounds", pRec->rclBounds));
+		m_propsCached->AddText(L"iGraphicsMode", GraphicsModeText(pRec->iGraphicsMode));
+		m_propsCached->AddValue(L"exScale", pRec->exScale);
+		m_propsCached->AddValue(L"eyScale", pRec->eyScale);
+		m_propsCached->AddValue(L"cStrings", pRec->cStrings);
 		auto pszText = GetRecordText();
 		if (pszText)
 			m_propsCached->AddText(L"Text", pszText);
@@ -1483,7 +1573,11 @@ void EMFRecAccessGDIRecPolyTextOutW::CacheProperties(const CachePropertiesContex
 	auto pRec = (EMRPOLYTEXTOUTW*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
 	if (pRec)
 	{
-		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		m_propsCached->sub.emplace_back(std::make_shared<PropertyNodeRectInt>(L"rclBounds", pRec->rclBounds));
+		m_propsCached->AddText(L"iGraphicsMode", GraphicsModeText(pRec->iGraphicsMode));
+		m_propsCached->AddValue(L"exScale", pRec->exScale);
+		m_propsCached->AddValue(L"eyScale", pRec->eyScale);
+		m_propsCached->AddValue(L"cStrings", pRec->cStrings);
 		auto pszText = GetRecordText();
 		if (pszText)
 			m_propsCached->AddText(L"Text", pszText);
@@ -1505,6 +1599,350 @@ struct EMRSMALLTEXTOUT_DATA
 	RECTL   rclBounds;
 };
 #define ETO_SMALL_CHARS 0x200
+
+static CStringW MapModeText(DWORD iMode)
+{
+	CStringW str;
+	str.Format(L"%u", iMode);
+	LPCWSTR label = nullptr;
+	switch (iMode)
+	{
+	case MM_TEXT:		label = L"MM_TEXT"; break;
+	case MM_LOMETRIC:	label = L"MM_LOMETRIC"; break;
+	case MM_HIMETRIC:	label = L"MM_HIMETRIC"; break;
+	case MM_LOENGLISH:	label = L"MM_LOENGLISH"; break;
+	case MM_HIENGLISH:	label = L"MM_HIENGLISH"; break;
+	case MM_TWIPS:		label = L"MM_TWIPS"; break;
+	case MM_ISOTROPIC:	label = L"MM_ISOTROPIC"; break;
+	case MM_ANISOTROPIC:label = L"MM_ANISOTROPIC"; break;
+	}
+	if (label) { str += L"  "; str += label; }
+	return str;
+}
+
+static CStringW BkModeText(DWORD iMode)
+{
+	CStringW str;
+	str.Format(L"%u", iMode);
+	if (iMode == TRANSPARENT)	str += L"  TRANSPARENT";
+	else if (iMode == OPAQUE)	str += L"  OPAQUE";
+	return str;
+}
+
+static CStringW PolyFillModeText(DWORD iMode)
+{
+	CStringW str;
+	str.Format(L"%u", iMode);
+	if (iMode == ALTERNATE)	str += L"  ALTERNATE";
+	else if (iMode == WINDING)	str += L"  WINDING";
+	return str;
+}
+
+static CStringW ROP2Text(DWORD iMode)
+{
+	CStringW str;
+	str.Format(L"%u", iMode);
+	LPCWSTR label = nullptr;
+	switch (iMode)
+	{
+	case R2_BLACK:		label = L"R2_BLACK"; break;
+	case R2_NOTMERGEPEN:label = L"R2_NOTMERGEPEN"; break;
+	case R2_MASKNOTPEN:	label = L"R2_MASKNOTPEN"; break;
+	case R2_NOTCOPYPEN:	label = L"R2_NOTCOPYPEN"; break;
+	case R2_MASKPENNOT:	label = L"R2_MASKPENNOT"; break;
+	case R2_NOT:		label = L"R2_NOT"; break;
+	case R2_XORPEN:		label = L"R2_XORPEN"; break;
+	case R2_NOTMASKPEN:	label = L"R2_NOTMASKPEN"; break;
+	case R2_MASKPEN:	label = L"R2_MASKPEN"; break;
+	case R2_NOTXORPEN:	label = L"R2_NOTXORPEN"; break;
+	case R2_NOP:		label = L"R2_NOP"; break;
+	case R2_MERGENOTPEN:label = L"R2_MERGENOTPEN"; break;
+	case R2_COPYPEN:	label = L"R2_COPYPEN"; break;
+	case R2_MERGEPENNOT:label = L"R2_MERGEPENNOT"; break;
+	case R2_MERGEPEN:	label = L"R2_MERGEPEN"; break;
+	case R2_WHITE:		label = L"R2_WHITE"; break;
+	}
+	if (label) { str += L"  "; str += label; }
+	return str;
+}
+
+static CStringW StretchBltModeText(DWORD iMode)
+{
+	CStringW str;
+	str.Format(L"%u", iMode);
+	LPCWSTR label = nullptr;
+	switch (iMode)
+	{
+	case BLACKONWHITE:	label = L"BLACKONWHITE"; break;
+	case WHITEONBLACK:	label = L"WHITEONBLACK"; break;
+	case COLORONCOLOR:	label = L"COLORONCOLOR"; break;
+	case HALFTONE:		label = L"HALFTONE"; break;
+	}
+	if (label) { str += L"  "; str += label; }
+	return str;
+}
+
+static CStringW TextAlignText(DWORD iMode)
+{
+	CStringW str;
+	str.Format(L"0x%04X", iMode);
+	CStringW flags;
+	// Horizontal: TA_LEFT=0, TA_RIGHT=2, TA_CENTER=6
+	DWORD h = iMode & (TA_CENTER);
+	if (h == TA_CENTER)			flags = L"TA_CENTER";
+	else if (h == TA_RIGHT)		flags = L"TA_RIGHT";
+	else						flags = L"TA_LEFT";
+	// Vertical: TA_TOP=0, TA_BOTTOM=8, TA_BASELINE=24
+	DWORD v = iMode & (TA_BASELINE);
+	if (v == TA_BASELINE)		{ flags += L" | TA_BASELINE"; }
+	else if (v == TA_BOTTOM)	{ flags += L" | TA_BOTTOM"; }
+	// TA_TOP is default (0), only show if no other flags
+	else						{ flags += L" | TA_TOP"; }
+	if (iMode & TA_UPDATECP)	flags += L" | TA_UPDATECP";
+	if (iMode & TA_RTLREADING)	flags += L" | TA_RTLREADING";
+	str += L"  ";
+	str += flags;
+	return str;
+}
+
+static CStringW ArcDirectionText(DWORD iArcDirection)
+{
+	CStringW str;
+	str.Format(L"%u", iArcDirection);
+	if (iArcDirection == AD_COUNTERCLOCKWISE)	str += L"  AD_COUNTERCLOCKWISE";
+	else if (iArcDirection == AD_CLOCKWISE)		str += L"  AD_CLOCKWISE";
+	return str;
+}
+
+static CStringW RegionModeText(DWORD iMode)
+{
+	CStringW str;
+	str.Format(L"%u", iMode);
+	LPCWSTR label = nullptr;
+	switch (iMode)
+	{
+	case RGN_AND:	label = L"RGN_AND"; break;
+	case RGN_OR:	label = L"RGN_OR"; break;
+	case RGN_XOR:	label = L"RGN_XOR"; break;
+	case RGN_DIFF:	label = L"RGN_DIFF"; break;
+	case RGN_COPY:	label = L"RGN_COPY"; break;
+	}
+	if (label) { str += L"  "; str += label; }
+	return str;
+}
+
+static CStringW ModifyWorldTransformModeText(DWORD iMode)
+{
+	CStringW str;
+	str.Format(L"%u", iMode);
+	LPCWSTR label = nullptr;
+	switch (iMode)
+	{
+	case MWT_IDENTITY:		label = L"MWT_IDENTITY"; break;
+	case MWT_LEFTMULTIPLY:	label = L"MWT_LEFTMULTIPLY"; break;
+	case MWT_RIGHTMULTIPLY:	label = L"MWT_RIGHTMULTIPLY"; break;
+	}
+	if (label) { str += L"  "; str += label; }
+	return str;
+}
+
+static CStringW FloodFillModeText(DWORD iMode)
+{
+	CStringW str;
+	str.Format(L"%u", iMode);
+	if (iMode == FLOODFILLBORDER)		str += L"  FLOODFILLBORDER";
+	else if (iMode == FLOODFILLSURFACE)	str += L"  FLOODFILLSURFACE";
+	return str;
+}
+
+static CStringW GradientFillModeText(DWORD ulMode)
+{
+	CStringW str;
+	str.Format(L"%u", ulMode);
+	LPCWSTR label = nullptr;
+	switch (ulMode)
+	{
+	case GRADIENT_FILL_RECT_H:	label = L"GRADIENT_FILL_RECT_H"; break;
+	case GRADIENT_FILL_RECT_V:	label = L"GRADIENT_FILL_RECT_V"; break;
+	case GRADIENT_FILL_TRIANGLE:label = L"GRADIENT_FILL_TRIANGLE"; break;
+	}
+	if (label) { str += L"  "; str += label; }
+	return str;
+}
+
+static CStringW BrushStyleText(DWORD lbStyle)
+{
+	CStringW str;
+	str.Format(L"%u", lbStyle);
+	LPCWSTR label = nullptr;
+	switch (lbStyle)
+	{
+	case BS_SOLID:			label = L"BS_SOLID"; break;
+	case BS_NULL:			label = L"BS_NULL"; break;
+	case BS_HATCHED:		label = L"BS_HATCHED"; break;
+	case BS_PATTERN:		label = L"BS_PATTERN"; break;
+	case BS_DIBPATTERN:		label = L"BS_DIBPATTERN"; break;
+	case BS_DIBPATTERNPT:	label = L"BS_DIBPATTERNPT"; break;
+	}
+	if (label) { str += L"  "; str += label; }
+	return str;
+}
+
+static CStringW HatchStyleText(DWORD lbHatch)
+{
+	CStringW str;
+	str.Format(L"%u", lbHatch);
+	LPCWSTR label = nullptr;
+	switch (lbHatch)
+	{
+	case HS_HORIZONTAL:	label = L"HS_HORIZONTAL"; break;
+	case HS_VERTICAL:	label = L"HS_VERTICAL"; break;
+	case HS_FDIAGONAL:	label = L"HS_FDIAGONAL"; break;
+	case HS_BDIAGONAL:	label = L"HS_BDIAGONAL"; break;
+	case HS_CROSS:		label = L"HS_CROSS"; break;
+	case HS_DIAGCROSS:	label = L"HS_DIAGCROSS"; break;
+	// EMF-spec hatch styles (not in Windows SDK headers)
+	case 6:				label = L"HS_SOLIDCLR"; break;
+	case 7:				label = L"HS_DITHEREDCLR"; break;
+	case 8:				label = L"HS_SOLIDTEXTCLR"; break;
+	case 9:				label = L"HS_DITHEREDTEXTCLR"; break;
+	case 10:			label = L"HS_SOLIDBKCLR"; break;
+	case 11:			label = L"HS_DITHEREDBKCLR"; break;
+	}
+	if (label) { str += L"  "; str += label; }
+	return str;
+}
+
+static CStringW PenStyleText(DWORD lopnStyle)
+{
+	CStringW str;
+	str.Format(L"%u", lopnStyle);
+	LPCWSTR label = nullptr;
+	switch (lopnStyle)
+	{
+	case PS_SOLID:		label = L"PS_SOLID"; break;
+	case PS_DASH:		label = L"PS_DASH"; break;
+	case PS_DOT:		label = L"PS_DOT"; break;
+	case PS_DASHDOT:	label = L"PS_DASHDOT"; break;
+	case PS_DASHDOTDOT:	label = L"PS_DASHDOTDOT"; break;
+	case PS_NULL:		label = L"PS_NULL"; break;
+	case PS_INSIDEFRAME:label = L"PS_INSIDEFRAME"; break;
+	}
+	if (label) { str += L"  "; str += label; }
+	return str;
+}
+
+static CStringW ExtPenStyleText(DWORD elpPenStyle)
+{
+	CStringW str;
+	str.Format(L"0x%08X", elpPenStyle);
+	CStringW flags;
+	// Type (PS_SOLID..PS_INSIDEFRAME, PS_USERSTYLE, PS_ALTERNATE)
+	DWORD type = elpPenStyle & PS_STYLE_MASK;
+	switch (type)
+	{
+	case PS_SOLID:			flags = L"PS_SOLID"; break;
+	case PS_DASH:			flags = L"PS_DASH"; break;
+	case PS_DOT:			flags = L"PS_DOT"; break;
+	case PS_DASHDOT:		flags = L"PS_DASHDOT"; break;
+	case PS_DASHDOTDOT:		flags = L"PS_DASHDOTDOT"; break;
+	case PS_NULL:			flags = L"PS_NULL"; break;
+	case PS_INSIDEFRAME:	flags = L"PS_INSIDEFRAME"; break;
+	case PS_USERSTYLE:		flags = L"PS_USERSTYLE"; break;
+	case PS_ALTERNATE:		flags = L"PS_ALTERNATE"; break;
+	}
+	// End cap
+	DWORD endcap = elpPenStyle & PS_ENDCAP_MASK;
+	if (endcap == PS_ENDCAP_ROUND)		flags += L" | PS_ENDCAP_ROUND";
+	else if (endcap == PS_ENDCAP_SQUARE)flags += L" | PS_ENDCAP_SQUARE";
+	else if (endcap == PS_ENDCAP_FLAT)	flags += L" | PS_ENDCAP_FLAT";
+	// Join
+	DWORD join = elpPenStyle & PS_JOIN_MASK;
+	if (join == PS_JOIN_ROUND)		flags += L" | PS_JOIN_ROUND";
+	else if (join == PS_JOIN_BEVEL)	flags += L" | PS_JOIN_BEVEL";
+	else if (join == PS_JOIN_MITER)	flags += L" | PS_JOIN_MITER";
+	// Type (cosmetic/geometric)
+	DWORD geotype = elpPenStyle & PS_TYPE_MASK;
+	if (geotype == PS_GEOMETRIC)	flags += L" | PS_GEOMETRIC";
+	else							flags += L" | PS_COSMETIC";
+	if (!flags.IsEmpty())
+	{
+		str += L"  ";
+		str += flags;
+	}
+	return str;
+}
+
+static CStringW FontWeightText(LONG lfWeight)
+{
+	CStringW str;
+	str.Format(L"%d", lfWeight);
+	LPCWSTR label = nullptr;
+	switch (lfWeight)
+	{
+	case FW_THIN:		label = L"FW_THIN"; break;
+	case FW_EXTRALIGHT:	label = L"FW_EXTRALIGHT"; break;
+	case FW_LIGHT:		label = L"FW_LIGHT"; break;
+	case FW_NORMAL:		label = L"FW_NORMAL"; break;
+	case FW_MEDIUM:		label = L"FW_MEDIUM"; break;
+	case FW_SEMIBOLD:	label = L"FW_SEMIBOLD"; break;
+	case FW_BOLD:		label = L"FW_BOLD"; break;
+	case FW_EXTRABOLD:	label = L"FW_EXTRABOLD"; break;
+	case FW_HEAVY:		label = L"FW_HEAVY"; break;
+	}
+	if (label) { str += L"  "; str += label; }
+	return str;
+}
+
+static CStringW CharSetText(BYTE lfCharSet)
+{
+	CStringW str;
+	str.Format(L"%u", lfCharSet);
+	LPCWSTR label = nullptr;
+	switch (lfCharSet)
+	{
+	case ANSI_CHARSET:			label = L"ANSI_CHARSET"; break;
+	case DEFAULT_CHARSET:		label = L"DEFAULT_CHARSET"; break;
+	case SYMBOL_CHARSET:		label = L"SYMBOL_CHARSET"; break;
+	case SHIFTJIS_CHARSET:		label = L"SHIFTJIS_CHARSET"; break;
+	case HANGUL_CHARSET:		label = L"HANGUL_CHARSET"; break;
+	case GB2312_CHARSET:		label = L"GB2312_CHARSET"; break;
+	case CHINESEBIG5_CHARSET:	label = L"CHINESEBIG5_CHARSET"; break;
+	case OEM_CHARSET:			label = L"OEM_CHARSET"; break;
+	case JOHAB_CHARSET:			label = L"JOHAB_CHARSET"; break;
+	case HEBREW_CHARSET:		label = L"HEBREW_CHARSET"; break;
+	case ARABIC_CHARSET:		label = L"ARABIC_CHARSET"; break;
+	case GREEK_CHARSET:			label = L"GREEK_CHARSET"; break;
+	case TURKISH_CHARSET:		label = L"TURKISH_CHARSET"; break;
+	case VIETNAMESE_CHARSET:	label = L"VIETNAMESE_CHARSET"; break;
+	case THAI_CHARSET:			label = L"THAI_CHARSET"; break;
+	case EASTEUROPE_CHARSET:	label = L"EASTEUROPE_CHARSET"; break;
+	case RUSSIAN_CHARSET:		label = L"RUSSIAN_CHARSET"; break;
+	case MAC_CHARSET:			label = L"MAC_CHARSET"; break;
+	case BALTIC_CHARSET:		label = L"BALTIC_CHARSET"; break;
+	}
+	if (label) { str += L"  "; str += label; }
+	return str;
+}
+
+static CStringW FontQualityText(BYTE lfQuality)
+{
+	CStringW str;
+	str.Format(L"%u", lfQuality);
+	LPCWSTR label = nullptr;
+	switch (lfQuality)
+	{
+	case DEFAULT_QUALITY:			label = L"DEFAULT_QUALITY"; break;
+	case DRAFT_QUALITY:				label = L"DRAFT_QUALITY"; break;
+	case PROOF_QUALITY:				label = L"PROOF_QUALITY"; break;
+	case NONANTIALIASED_QUALITY:	label = L"NONANTIALIASED_QUALITY"; break;
+	case ANTIALIASED_QUALITY:		label = L"ANTIALIASED_QUALITY"; break;
+	case CLEARTYPE_QUALITY:			label = L"CLEARTYPE_QUALITY"; break;
+	case CLEARTYPE_NATURAL_QUALITY:	label = L"CLEARTYPE_NATURAL_QUALITY"; break;
+	}
+	if (label) { str += L"  "; str += label; }
+	return str;
+}
 
 static CStringW SmallTextOutOptionsText(UINT fuOptions)
 {
@@ -1640,7 +2078,10 @@ void EMFRecAccessGDIRecGradientFill::CacheProperties(const CachePropertiesContex
 	auto pRec = (EMRGRADIENTFILL*)EMFRecAccessGDIObjectCat::GetGDIRecord(m_recInfo);
 	if (pRec)
 	{
-		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		m_propsCached->sub.emplace_back(std::make_shared<PropertyNodeRectInt>(L"rclBounds", pRec->rclBounds));
+		m_propsCached->AddValue(L"nVer", pRec->nVer);
+		m_propsCached->AddValue(L"nTri", pRec->nTri);
+		m_propsCached->AddText(L"ulMode", GradientFillModeText(pRec->ulMode));
 	}
 }
 

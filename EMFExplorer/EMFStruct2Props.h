@@ -443,15 +443,65 @@ struct EmfStruct2Properties
 	}
 	static inline CStringW GetEnumText(OLineCapType value)
 	{
+		LPCWSTR label = nullptr;
+		switch (value)
+		{
+		case OLineCapType::Flat:			label = L"Flat"; break;
+		case OLineCapType::Square:			label = L"Square"; break;
+		case OLineCapType::Round:			label = L"Round"; break;
+		case OLineCapType::Triangle:		label = L"Triangle"; break;
+		case OLineCapType::NoAnchor:		label = L"NoAnchor"; break;
+		case OLineCapType::SquareAnchor:	label = L"SquareAnchor"; break;
+		case OLineCapType::RoundAnchor:		label = L"RoundAnchor"; break;
+		case OLineCapType::DiamondAnchor:	label = L"DiamondAnchor"; break;
+		case OLineCapType::ArrowAnchor:		label = L"ArrowAnchor"; break;
+		case OLineCapType::Custom:			label = L"Custom"; break;
+		default: break;
+		}
+		if (label) return CStringW(label);
 		return GetEnumTextAsHex((u32t)value);
 	}
 	static inline CStringW GetEnumText(OPixelFormat value)
 	{
+		LPCWSTR label = nullptr;
+		switch (value)
+		{
+		case OPixelFormat::FormatUndefined:			label = L"Undefined"; break;
+		case OPixelFormat::Format1bppIndexed:		label = L"1bppIndexed"; break;
+		case OPixelFormat::Format4bppIndexed:		label = L"4bppIndexed"; break;
+		case OPixelFormat::Format8bppIndexed:		label = L"8bppIndexed"; break;
+		case OPixelFormat::Format16bppGrayScale:	label = L"16bppGrayScale"; break;
+		case OPixelFormat::Format16bppRGB555:		label = L"16bppRGB555"; break;
+		case OPixelFormat::Format16bppRGB565:		label = L"16bppRGB565"; break;
+		case OPixelFormat::Format16bppARGB1555:		label = L"16bppARGB1555"; break;
+		case OPixelFormat::Format24bppRGB:			label = L"24bppRGB"; break;
+		case OPixelFormat::Format32bppRGB:			label = L"32bppRGB"; break;
+		case OPixelFormat::Format32bppARGB:			label = L"32bppARGB"; break;
+		case OPixelFormat::Format32bppPARGB:		label = L"32bppPARGB"; break;
+		case OPixelFormat::Format48bppRGB:			label = L"48bppRGB"; break;
+		case OPixelFormat::Format64bppARGB:			label = L"64bppARGB"; break;
+		case OPixelFormat::Format64bppPARGB:		label = L"64bppPARGB"; break;
+		default: break;
+		}
+		if (label) return CStringW(label);
 		return GetEnumTextAsHex((u32t)value);
 	}
 	static inline CStringW GetEnumText(OBrushData value)
 	{
-		return GetEnumTextAsHex((u32t)value);
+		CStringW str;
+		str.Format(L"0x%08X", (u32t)value);
+		CStringW flags;
+		u32t v = (u32t)value;
+		if (v & (u32t)OBrushData::Path)				{ flags += L"Path"; }
+		if (v & (u32t)OBrushData::Transform)			{ if (!flags.IsEmpty()) flags += L" | "; flags += L"Transform"; }
+		if (v & (u32t)OBrushData::PresetColors)			{ if (!flags.IsEmpty()) flags += L" | "; flags += L"PresetColors"; }
+		if (v & (u32t)OBrushData::BlendFactorsH)		{ if (!flags.IsEmpty()) flags += L" | "; flags += L"BlendFactorsH"; }
+		if (v & (u32t)OBrushData::BlendFactorsV)		{ if (!flags.IsEmpty()) flags += L" | "; flags += L"BlendFactorsV"; }
+		if (v & (u32t)OBrushData::FocusScales)			{ if (!flags.IsEmpty()) flags += L" | "; flags += L"FocusScales"; }
+		if (v & (u32t)OBrushData::IsGammaCorrected)		{ if (!flags.IsEmpty()) flags += L" | "; flags += L"IsGammaCorrected"; }
+		if (v & (u32t)OBrushData::DoNotTransform)		{ if (!flags.IsEmpty()) flags += L" | "; flags += L"DoNotTransform"; }
+		if (!flags.IsEmpty()) { str += L"  "; str += flags; }
+		return str;
 	}
 	static inline CStringW GetEnumTextAsHex(u32t value)
 	{

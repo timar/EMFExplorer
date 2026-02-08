@@ -1290,6 +1290,19 @@ LPCWSTR EMFRecAccessGDIPlusRecDrawDriverString::GetRecordText() const
 	return m_strText.IsEmpty() ? nullptr : (LPCWSTR)m_strText;
 }
 
+static CStringW DriverStringOptionsText(u32t flags)
+{
+	CStringW str;
+	str.Format(L"0x%08X", flags);
+	CStringW flagStr;
+	if (flags & (u32t)ODriverStringOptions::CmapLookup)		flagStr += L"CmapLookup";
+	if (flags & (u32t)ODriverStringOptions::Vertical)		{ if (!flagStr.IsEmpty()) flagStr += L" | "; flagStr += L"Vertical"; }
+	if (flags & (u32t)ODriverStringOptions::RealizedAdvance){ if (!flagStr.IsEmpty()) flagStr += L" | "; flagStr += L"RealizedAdvance"; }
+	if (flags & (u32t)ODriverStringOptions::LimitSubpixel)	{ if (!flagStr.IsEmpty()) flagStr += L" | "; flagStr += L"LimitSubpixel"; }
+	if (!flagStr.IsEmpty()) { str += L"  "; str += flagStr; }
+	return str;
+}
+
 void EMFRecAccessGDIPlusRecDrawDriverString::CacheProperties(const CachePropertiesContext& ctxt)
 {
 	EMFRecAccessGDIPlusDrawingCat::CacheProperties(ctxt);
@@ -1320,7 +1333,7 @@ void EMFRecAccessGDIPlusRecDrawDriverString::CacheProperties(const CacheProperti
 			pNode->sub = pProp->sub;
 		}
 	}
-	m_propsCached->AddValue(L"DriverStringOptionsFlags", m_recDataCached.DriverStringOptionsFlags, true);
+	m_propsCached->AddText(L"DriverStringOptionsFlags", DriverStringOptionsText(m_recDataCached.DriverStringOptionsFlags));
 	m_propsCached->AddValue(L"MatrixPresent", m_recDataCached.MatrixPresent);
 	if (!m_recDataCached.Glyphs.empty())
 	{

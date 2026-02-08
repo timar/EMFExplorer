@@ -510,6 +510,8 @@ void CEMFRecListCtrl::OnGetDispInfo(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	LV_DISPINFO* pDispInfo = (LV_DISPINFO*)pNMHDR;
 	ASSERT(pDispInfo);
+	if (!pDispInfo)
+		return;
 	LVITEM& item = pDispInfo->item;
 
 	if (item.mask & LVIF_TEXT)
