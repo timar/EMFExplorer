@@ -483,6 +483,8 @@ public:
 	LPCWSTR GetRecordName() const override { return L"EMR_CREATEPEN"; }
 
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfRecordTypeCreatePen; }
+
+	bool GetRecordColor(COLORREF& cr) const override;
 private:
 	void Preprocess(EMFAccess* pEMF) override;
 
