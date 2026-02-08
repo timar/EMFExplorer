@@ -339,6 +339,8 @@ public:
 	LPCWSTR GetRecordName() const override { return L"EMR_SETTEXTCOLOR"; }
 
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfRecordTypeSetTextColor; }
+
+	bool GetRecordColor(COLORREF& cr) const override;
 private:
 	void CacheProperties(const CachePropertiesContext& ctxt) override;
 };
@@ -349,6 +351,8 @@ public:
 	LPCWSTR GetRecordName() const override { return L"EMR_SETBKCOLOR"; }
 
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfRecordTypeSetBkColor; }
+
+	bool GetRecordColor(COLORREF& cr) const override;
 private:
 	void CacheProperties(const CachePropertiesContext& ctxt) override;
 };

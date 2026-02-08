@@ -975,6 +975,16 @@ void EMFRecAccessGDIRecSetColorAdjustment::CacheProperties(const CacheProperties
 	}
 }
 
+bool EMFRecAccessGDIRecSetTextColor::GetRecordColor(COLORREF& cr) const
+{
+	if (m_recInfo.Data && m_recInfo.DataSize >= sizeof(COLORREF))
+	{
+		cr = *(const COLORREF*)m_recInfo.Data;
+		return true;
+	}
+	return false;
+}
+
 void EMFRecAccessGDIRecSetTextColor::CacheProperties(const CachePropertiesContext& ctxt)
 {
 	EMFRecAccessGDIStateCat::CacheProperties(ctxt);
@@ -983,6 +993,16 @@ void EMFRecAccessGDIRecSetTextColor::CacheProperties(const CachePropertiesContex
 	{
 		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
 	}
+}
+
+bool EMFRecAccessGDIRecSetBkColor::GetRecordColor(COLORREF& cr) const
+{
+	if (m_recInfo.Data && m_recInfo.DataSize >= sizeof(COLORREF))
+	{
+		cr = *(const COLORREF*)m_recInfo.Data;
+		return true;
+	}
+	return false;
 }
 
 void EMFRecAccessGDIRecSetBkColor::CacheProperties(const CachePropertiesContext& ctxt)

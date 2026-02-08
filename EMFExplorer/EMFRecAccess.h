@@ -30,6 +30,9 @@ public:
 	// Additional text associated with the record (e.g. the actual string for text output records)
 	virtual LPCWSTR GetRecordText() const { return nullptr; }
 
+	// Color associated with the record (e.g. for EMR_SETTEXTCOLOR)
+	virtual bool GetRecordColor(COLORREF& cr) const { return false; }
+
 	virtual emfplus::OEmfPlusRecordType GetRecordType() const = 0;
 
 	enum RecCategory

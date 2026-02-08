@@ -432,6 +432,39 @@ void CEMFRecListCtrl::OnDrawItem(LPNMLVCUSTOMDRAW lplvcd) const
 		UINT nFormat = DT_SINGLELINE;
 		pDC->DrawText(str, &rcText, nFormat|DT_END_ELLIPSIS);
 
+		if (nCol == ColumnTypeName)
+		{
+			COLORREF crRec;
+			if (pRec->GetRecordColor(crRec))
+			{
+				// Append hex RGB text (show full COLORREF if high byte is non-zero)
+				CStringW strColor;
+				if (crRec & 0xFF000000)
+					strColor.Format(L" #%02X%02X%02X [%08X]",
+						GetRValue(crRec), GetGValue(crRec), GetBValue(crRec), crRec);
+				else
+					strColor.Format(L" #%02X%02X%02X",
+						GetRValue(crRec), GetGValue(crRec), GetBValue(crRec));
+				CSize szText = pDC->GetTextExtent(str);
+				CRect rcColor = rcText;
+				rcColor.left += szText.cx;
+				pDC->DrawText(strColor, &rcColor, DT_SINGLELINE);
+
+				// Draw color swatch (mask high byte to ensure direct RGB)
+				CSize szFull = pDC->GetTextExtent(str + strColor);
+				int sqSize = rcText.Height() - 2;
+				int sqLeft = rcText.left + szFull.cx + 4;
+				if (sqLeft + sqSize < rcText.right)
+				{
+					CRect rcSq(sqLeft, rcText.top + 1, sqLeft + sqSize, rcText.top + 1 + sqSize);
+					CBrush brFill(crRec & 0x00FFFFFF);
+					pDC->FillRect(rcSq, &brFill);
+					CBrush brFrame(lplvcd->clrText);
+					pDC->FrameRect(rcSq, &brFrame);
+				}
+			}
+		}
+
 		if (bLink && !bDarkTheme)
 		{
 			pDC->SetTextColor(lplvcd->clrText);
