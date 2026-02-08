@@ -382,11 +382,40 @@ bool EMFRecAccessGDIPlusRecObject::DrawPreview(PreviewContext* info)
 	return false;
 }
 
+// Helper: extract inline solid color from GDI+ fill records when FlagS (0x8000) is set.
+// BrushId (first u32t in data) is reinterpreted as OEmfPlusARGB.
+static bool GetPlusFillColor(const emfplus::OEmfPlusRecInfo& recInfo, COLORREF& cr)
+{
+	if (!(recInfo.Flags & 0x8000))	// FlagS
+		return false;
+	if (!recInfo.Data || recInfo.DataSize < sizeof(emfplus::u32t))
+		return false;
+	auto& argb = *(const emfplus::OEmfPlusARGB*)recInfo.Data;
+	cr = argb.ToCOLORREF();
+	return true;
+}
+
+bool EMFRecAccessGDIPlusRecClear::GetRecordColor(COLORREF& cr) const
+{
+	if (m_recInfo.Data && m_recInfo.DataSize >= sizeof(emfplus::OEmfPlusARGB))
+	{
+		auto pRec = (const emfplus::OEmfPlusRecClear*)m_recInfo.Data;
+		cr = pRec->Color.ToCOLORREF();
+		return true;
+	}
+	return false;
+}
+
 void EMFRecAccessGDIPlusRecClear::CacheProperties(const CachePropertiesContext& ctxt)
 {
 	EMFRecAccessGDIPlusDrawingCat::CacheProperties(ctxt);
 	auto pRec = (OEmfPlusRecClear*)m_recInfo.Data;
 	m_propsCached->sub.emplace_back(std::make_shared<PropertyNodeColor>(L"Color", pRec->Color));
+}
+
+bool EMFRecAccessGDIPlusRecFillRects::GetRecordColor(COLORREF& cr) const
+{
+	return GetPlusFillColor(m_recInfo, cr);
 }
 
 void EMFRecAccessGDIPlusRecFillRects::Preprocess(EMFAccess* pEMF)
@@ -448,6 +477,11 @@ void EMFRecAccessGDIPlusRecDrawRects::CacheProperties(const CachePropertiesConte
 		auto pPenNode = m_propsCached->AddBranch(L"Pen");
 		pPenNode->sub = pPenProp->sub;
 	}
+}
+
+bool EMFRecAccessGDIPlusRecFillPolygon::GetRecordColor(COLORREF& cr) const
+{
+	return GetPlusFillColor(m_recInfo, cr);
 }
 
 void EMFRecAccessGDIPlusRecFillPolygon::Preprocess(EMFAccess* pEMF)
@@ -514,6 +548,11 @@ void EMFRecAccessGDIPlusRecDrawLines::CacheProperties(const CachePropertiesConte
 	}
 }
 
+bool EMFRecAccessGDIPlusRecFillEllipse::GetRecordColor(COLORREF& cr) const
+{
+	return GetPlusFillColor(m_recInfo, cr);
+}
+
 void EMFRecAccessGDIPlusRecFillEllipse::Preprocess(EMFAccess* pEMF)
 {
 	if (!(m_recInfo.Flags & OEmfPlusRecFillEllipse::FlagS))
@@ -573,6 +612,11 @@ void EMFRecAccessGDIPlusRecDrawEllipse::CacheProperties(const CachePropertiesCon
 		auto pPenNode = m_propsCached->AddBranch(L"Pen");
 		pPenNode->sub = pPenProp->sub;
 	}
+}
+
+bool EMFRecAccessGDIPlusRecFillPie::GetRecordColor(COLORREF& cr) const
+{
+	return GetPlusFillColor(m_recInfo, cr);
 }
 
 void EMFRecAccessGDIPlusRecFillPie::Preprocess(EMFAccess* pEMF)
@@ -734,6 +778,11 @@ void EMFRecAccessGDIPlusRecOffsetClip::CacheProperties(const CachePropertiesCont
 	m_propsCached->AddValue(L"dy", pRec->dy);
 }
 
+bool EMFRecAccessGDIPlusRecFillRegion::GetRecordColor(COLORREF& cr) const
+{
+	return GetPlusFillColor(m_recInfo, cr);
+}
+
 void EMFRecAccessGDIPlusRecFillRegion::Preprocess(EMFAccess* pEMF)
 {
 	auto nID = (u8t)(m_recInfo.Flags & OEmfPlusRecFillRegion::FlagObjectIDMask);
@@ -779,6 +828,11 @@ void EMFRecAccessGDIPlusRecFillRegion::CacheProperties(const CachePropertiesCont
 		auto pRgnNode = m_propsCached->AddBranch(L"Region");
 		pRgnNode->sub = pRgnProp->sub;
 	}
+}
+
+bool EMFRecAccessGDIPlusRecFillPath::GetRecordColor(COLORREF& cr) const
+{
+	return GetPlusFillColor(m_recInfo, cr);
 }
 
 void EMFRecAccessGDIPlusRecFillPath::Preprocess(EMFAccess* pEMF)
@@ -863,6 +917,11 @@ void EMFRecAccessGDIPlusRecDrawPath::CacheProperties(const CachePropertiesContex
 		auto pPenNode = m_propsCached->AddBranch(L"Pen");
 		pPenNode->sub = pPenProp->sub;
 	}
+}
+
+bool EMFRecAccessGDIPlusRecFillClosedCurve::GetRecordColor(COLORREF& cr) const
+{
+	return GetPlusFillColor(m_recInfo, cr);
 }
 
 void EMFRecAccessGDIPlusRecFillClosedCurve::Preprocess(EMFAccess* pEMF)
@@ -1125,6 +1184,11 @@ void EMFRecAccessGDIPlusRecDrawString::Preprocess(EMFAccess* pEMF)
 	}
 }
 
+bool EMFRecAccessGDIPlusRecDrawString::GetRecordColor(COLORREF& cr) const
+{
+	return GetPlusFillColor(m_recInfo, cr);
+}
+
 LPCWSTR EMFRecAccessGDIPlusRecDrawString::GetRecordText() const
 {
 	if (m_strText.IsEmpty() && m_recInfo.Data && m_recInfo.DataSize > 0)
@@ -1200,6 +1264,11 @@ void EMFRecAccessGDIPlusRecDrawDriverString::Preprocess(EMFAccess* pEMF)
 				AddLinkRecord(pRec, LinkedObjTypeBrush);
 		}
 	}
+}
+
+bool EMFRecAccessGDIPlusRecDrawDriverString::GetRecordColor(COLORREF& cr) const
+{
+	return GetPlusFillColor(m_recInfo, cr);
 }
 
 LPCWSTR EMFRecAccessGDIPlusRecDrawDriverString::GetRecordText() const

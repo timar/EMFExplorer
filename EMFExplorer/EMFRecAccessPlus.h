@@ -177,6 +177,8 @@ public:
 	LPCWSTR GetRecordName() const override { return L"EmfPlusClear"; }
 
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfPlusRecordTypeClear; }
+
+	bool GetRecordColor(COLORREF& cr) const override;
 protected:
 	void CacheProperties(const CachePropertiesContext& ctxt) override;
 private:
@@ -189,6 +191,8 @@ public:
 	LPCWSTR GetRecordName() const override { return L"EmfPlusFillRects"; }
 
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfPlusRecordTypeFillRects; }
+
+	bool GetRecordColor(COLORREF& cr) const override;
 private:
 	void Preprocess(EMFAccess* pEMF) override;
 
@@ -217,6 +221,8 @@ public:
 	LPCWSTR GetRecordName() const override { return L"EmfPlusFillPolygon"; }
 
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfPlusRecordTypeFillPolygon; }
+
+	bool GetRecordColor(COLORREF& cr) const override;
 private:
 	void Preprocess(EMFAccess* pEMF) override;
 
@@ -245,6 +251,8 @@ public:
 	LPCWSTR GetRecordName() const override { return L"EmfPlusFillEllipse"; }
 
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfPlusRecordTypeFillEllipse; }
+
+	bool GetRecordColor(COLORREF& cr) const override;
 private:
 	void Preprocess(EMFAccess* pEMF) override;
 
@@ -273,6 +281,8 @@ public:
 	LPCWSTR GetRecordName() const override { return L"EmfPlusFillPie"; }
 
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfPlusRecordTypeFillPie; }
+
+	bool GetRecordColor(COLORREF& cr) const override;
 private:
 	void Preprocess(EMFAccess* pEMF) override;
 
@@ -315,6 +325,8 @@ public:
 	LPCWSTR GetRecordName() const override { return L"EmfPlusFillRegion"; }
 
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfPlusRecordTypeFillRegion; }
+
+	bool GetRecordColor(COLORREF& cr) const override;
 private:
 	void Preprocess(EMFAccess* pEMF) override;
 
@@ -327,6 +339,8 @@ public:
 	LPCWSTR GetRecordName() const override { return L"EmfPlusFillPath"; }
 
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfPlusRecordTypeFillPath; }
+
+	bool GetRecordColor(COLORREF& cr) const override;
 private:
 	void Preprocess(EMFAccess* pEMF) override;
 
@@ -353,6 +367,8 @@ public:
 	LPCWSTR GetRecordName() const override { return L"EmfPlusFillClosedCurve"; }
 
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfPlusRecordTypeFillClosedCurve; }
+
+	bool GetRecordColor(COLORREF& cr) const override;
 protected:
 	void Preprocess(EMFAccess* pEMF) override;
 
@@ -443,6 +459,8 @@ public:
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfPlusRecordTypeDrawString; }
 
 	LPCWSTR GetRecordText() const override;
+
+	bool GetRecordColor(COLORREF& cr) const override;
 private:
 	void Preprocess(EMFAccess* pEMF) override;
 
@@ -740,6 +758,8 @@ public:
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfPlusRecordTypeDrawDriverString; }
 
 	LPCWSTR GetRecordText() const override;
+
+	bool GetRecordColor(COLORREF& cr) const override;
 private:
 	void Preprocess(EMFAccess* pEMF) override;
 
