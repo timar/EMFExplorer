@@ -28,6 +28,10 @@ static CStringW FontWeightText(LONG lfWeight);
 static CStringW CharSetText(BYTE lfCharSet);
 static CStringW FontQualityText(BYTE lfQuality);
 static CStringW GraphicsModeText(UINT iGraphicsMode);
+static CStringW RasterOpText(DWORD dwRop);
+static CStringW BlendFunctionText(DWORD dwRop);
+static CStringW DIBColorsText(DWORD iUsage);
+static CStringW BiCompressionText(DWORD biCompression);
 
 const ENHMETARECORD* EMFRecAccessGDIRec::GetGDIRecord(const emfplus::OEmfPlusRecInfo& rec)
 {
@@ -378,11 +382,23 @@ void EMFRecAccessGDIRecBitBlt::CacheProperties(const CachePropertiesContext& ctx
 	if (pRec)
 	{
 		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		for (auto& node : m_propsCached->sub)
+		{
+			if (node->name == L"dwRop")
+				node->text = RasterOpText(pRec->dwRop);
+			else if (node->name == L"iUsageSrc")
+				node->text = DIBColorsText(pRec->iUsageSrc);
+		}
 		if (pRec->offBmiSrc)
 		{
 			auto pSrcBmpHeader = (const BITMAPINFOHEADER*)((char*)pRec + pRec->offBmiSrc);
 			auto pSrcBmpHeaderNode = m_propsCached->AddBranch(L"BMP");
 			EmfStruct2Properties::Build(*pSrcBmpHeader, pSrcBmpHeaderNode.get());
+			for (auto& node : pSrcBmpHeaderNode->sub)
+			{
+				if (node->name == L"biCompression")
+					node->text = BiCompressionText(pSrcBmpHeader->biCompression);
+			}
 		}
 	}
 }
@@ -394,11 +410,21 @@ void EMFRecAccessGDIRecStretchBlt::CacheProperties(const CachePropertiesContext&
 	if (pRec)
 	{
 		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		for (auto& node : m_propsCached->sub)
+		{
+			if (node->name == L"dwRop")
+				node->text = RasterOpText(pRec->dwRop);
+		}
 		if (pRec->offBmiSrc)
 		{
 			auto pSrcBmpHeader = (const BITMAPINFOHEADER*)((char*)pRec + pRec->offBmiSrc);
 			auto pSrcBmpHeaderNode = m_propsCached->AddBranch(L"BMP");
 			EmfStruct2Properties::Build(*pSrcBmpHeader, pSrcBmpHeaderNode.get());
+			for (auto& node : pSrcBmpHeaderNode->sub)
+			{
+				if (node->name == L"biCompression")
+					node->text = BiCompressionText(pSrcBmpHeader->biCompression);
+			}
 		}
 	}
 }
@@ -410,6 +436,15 @@ void EMFRecAccessGDIRecMaskBlt::CacheProperties(const CachePropertiesContext& ct
 	if (pRec)
 	{
 		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		for (auto& node : m_propsCached->sub)
+		{
+			if (node->name == L"dwRop")
+				node->text = RasterOpText(pRec->dwRop);
+			else if (node->name == L"iUsageSrc")
+				node->text = DIBColorsText(pRec->iUsageSrc);
+			else if (node->name == L"iUsageMask")
+				node->text = DIBColorsText(pRec->iUsageMask);
+		}
 	}
 }
 
@@ -420,6 +455,13 @@ void EMFRecAccessGDIRecPlgBlt::CacheProperties(const CachePropertiesContext& ctx
 	if (pRec)
 	{
 		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		for (auto& node : m_propsCached->sub)
+		{
+			if (node->name == L"iUsageSrc")
+				node->text = DIBColorsText(pRec->iUsageSrc);
+			else if (node->name == L"iUsageMask")
+				node->text = DIBColorsText(pRec->iUsageMask);
+		}
 	}
 }
 
@@ -430,11 +472,21 @@ void EMFRecAccessGDIRecSetDIBitsToDevice::CacheProperties(const CachePropertiesC
 	if (pRec)
 	{
 		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		for (auto& node : m_propsCached->sub)
+		{
+			if (node->name == L"iUsageSrc")
+				node->text = DIBColorsText(pRec->iUsageSrc);
+		}
 		if (pRec->offBmiSrc)
 		{
 			auto pSrcBmpHeader = (const BITMAPINFOHEADER*)((char*)pRec + pRec->offBmiSrc);
 			auto pSrcBmpHeaderNode = m_propsCached->AddBranch(L"BMP");
 			EmfStruct2Properties::Build(*pSrcBmpHeader, pSrcBmpHeaderNode.get());
+			for (auto& node : pSrcBmpHeaderNode->sub)
+			{
+				if (node->name == L"biCompression")
+					node->text = BiCompressionText(pSrcBmpHeader->biCompression);
+			}
 		}
 	}
 }
@@ -475,11 +527,23 @@ void EMFRecAccessGDIRecStretchDIBits::CacheProperties(const CachePropertiesConte
 	if (pRec)
 	{
 		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		for (auto& node : m_propsCached->sub)
+		{
+			if (node->name == L"dwRop")
+				node->text = RasterOpText(pRec->dwRop);
+			else if (node->name == L"iUsageSrc")
+				node->text = DIBColorsText(pRec->iUsageSrc);
+		}
 		if (pRec->offBmiSrc)
 		{
 			auto pSrcBmpHeader = (const BITMAPINFOHEADER*)((char*)pRec + pRec->offBmiSrc);
 			auto pSrcBmpHeaderNode = m_propsCached->AddBranch(L"BMP");
 			EmfStruct2Properties::Build(*pSrcBmpHeader, pSrcBmpHeaderNode.get());
+			for (auto& node : pSrcBmpHeaderNode->sub)
+			{
+				if (node->name == L"biCompression")
+					node->text = BiCompressionText(pSrcBmpHeader->biCompression);
+			}
 		}
 	}
 }
@@ -599,6 +663,11 @@ void EMFRecAccessGDIRecCreateMonoBrush::CacheProperties(const CachePropertiesCon
 	if (pRec)
 	{
 		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		for (auto& node : m_propsCached->sub)
+		{
+			if (node->name == L"iUsage")
+				node->text = DIBColorsText(pRec->iUsage);
+		}
 	}
 }
 
@@ -615,6 +684,11 @@ void EMFRecAccessGDIRecCreateDIBPatternBrushPt::CacheProperties(const CachePrope
 	if (pRec)
 	{
 		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		for (auto& node : m_propsCached->sub)
+		{
+			if (node->name == L"iUsage")
+				node->text = DIBColorsText(pRec->iUsage);
+		}
 	}
 }
 
@@ -743,6 +817,13 @@ void EMFRecAccessGDIRecAlphaBlend::CacheProperties(const CachePropertiesContext&
 	if (pRec)
 	{
 		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		for (auto& node : m_propsCached->sub)
+		{
+			if (node->name == L"dwRop")
+				node->text = BlendFunctionText(pRec->dwRop);
+			else if (node->name == L"iUsageSrc")
+				node->text = DIBColorsText(pRec->iUsageSrc);
+		}
 	}
 }
 
@@ -753,6 +834,18 @@ void EMFRecAccessGDIRecTransparentBlt::CacheProperties(const CachePropertiesCont
 	if (pRec)
 	{
 		EmfStruct2Properties::Build(*pRec, m_propsCached.get());
+		for (size_t i = 0; i < m_propsCached->sub.size(); ++i)
+		{
+			auto& node = m_propsCached->sub[i];
+			if (node->name == L"dwRop")
+			{
+				// dwRop is actually the transparent color (COLORREF)
+				m_propsCached->sub[i] = std::make_shared<PropertyNodeColor>(L"dwRop",
+					emfplus::OEmfPlusARGB::FromCOLORREF(pRec->dwRop));
+			}
+			else if (node->name == L"iUsageSrc")
+				node->text = DIBColorsText(pRec->iUsageSrc);
+		}
 	}
 }
 
@@ -1977,6 +2070,117 @@ static CStringW GraphicsModeText(UINT iGraphicsMode)
 		str += L"  GM_COMPATIBLE";
 	else if (iGraphicsMode == GM_ADVANCED)
 		str += L"  GM_ADVANCED";
+	return str;
+}
+
+static CStringW RasterOpText(DWORD dwRop)
+{
+	CStringW str;
+	// Check for high-bit flags first
+	CStringW flags;
+	DWORD baseRop = dwRop;
+	if (dwRop & 0x80000000)
+	{
+		flags = L"NOMIRRORBITMAP";
+		baseRop &= ~0x80000000;
+	}
+	if (dwRop & 0x40000000)
+	{
+		if (!flags.IsEmpty()) flags += L" | ";
+		flags += L"CAPTUREBLT";
+		baseRop &= ~0x40000000;
+	}
+	str.Format(L"0x%08X", dwRop);
+	LPCWSTR label = nullptr;
+	switch (baseRop)
+	{
+	case SRCCOPY:		label = L"SRCCOPY"; break;
+	case SRCPAINT:		label = L"SRCPAINT"; break;
+	case SRCAND:		label = L"SRCAND"; break;
+	case SRCINVERT:		label = L"SRCINVERT"; break;
+	case SRCERASE:		label = L"SRCERASE"; break;
+	case NOTSRCCOPY:	label = L"NOTSRCCOPY"; break;
+	case NOTSRCERASE:	label = L"NOTSRCERASE"; break;
+	case MERGECOPY:		label = L"MERGECOPY"; break;
+	case MERGEPAINT:	label = L"MERGEPAINT"; break;
+	case PATCOPY:		label = L"PATCOPY"; break;
+	case PATPAINT:		label = L"PATPAINT"; break;
+	case PATINVERT:		label = L"PATINVERT"; break;
+	case DSTINVERT:		label = L"DSTINVERT"; break;
+	case BLACKNESS:		label = L"BLACKNESS"; break;
+	case WHITENESS:		label = L"WHITENESS"; break;
+	}
+	if (label || !flags.IsEmpty())
+	{
+		str += L"  ";
+		if (!flags.IsEmpty())
+		{
+			str += flags;
+			if (label) { str += L" | "; str += label; }
+		}
+		else
+			str += label;
+	}
+	return str;
+}
+
+static CStringW BlendFunctionText(DWORD dwRop)
+{
+	// dwRop is a packed BLENDFUNCTION: byte 0=BlendOp, 1=BlendFlags, 2=SourceConstantAlpha, 3=AlphaFormat
+	BYTE blendOp = (BYTE)(dwRop & 0xFF);
+	BYTE blendFlags = (BYTE)((dwRop >> 8) & 0xFF);
+	BYTE srcAlpha = (BYTE)((dwRop >> 16) & 0xFF);
+	BYTE alphaFormat = (BYTE)((dwRop >> 24) & 0xFF);
+	CStringW str;
+	if (blendOp == AC_SRC_OVER)
+		str = L"AC_SRC_OVER";
+	else
+		str.Format(L"BlendOp=%u", blendOp);
+	if (blendFlags != 0)
+	{
+		CStringW tmp;
+		tmp.Format(L", BlendFlags=%u", blendFlags);
+		str += tmp;
+	}
+	CStringW tmp;
+	tmp.Format(L", Alpha=%u", srcAlpha);
+	str += tmp;
+	if (alphaFormat & AC_SRC_ALPHA)
+		str += L", AC_SRC_ALPHA";
+	else if (alphaFormat != 0)
+	{
+		tmp.Format(L", AlphaFormat=%u", alphaFormat);
+		str += tmp;
+	}
+	return str;
+}
+
+static CStringW DIBColorsText(DWORD iUsage)
+{
+	CStringW str;
+	str.Format(L"%u", iUsage);
+	if (iUsage == DIB_RGB_COLORS)
+		str += L"  DIB_RGB_COLORS";
+	else if (iUsage == DIB_PAL_COLORS)
+		str += L"  DIB_PAL_COLORS";
+	return str;
+}
+
+static CStringW BiCompressionText(DWORD biCompression)
+{
+	CStringW str;
+	str.Format(L"%u", biCompression);
+	LPCWSTR label = nullptr;
+	switch (biCompression)
+	{
+	case BI_RGB:		label = L"BI_RGB"; break;
+	case BI_RLE8:		label = L"BI_RLE8"; break;
+	case BI_RLE4:		label = L"BI_RLE4"; break;
+	case BI_BITFIELDS:	label = L"BI_BITFIELDS"; break;
+	case BI_JPEG:		label = L"BI_JPEG"; break;
+	case BI_PNG:		label = L"BI_PNG"; break;
+	}
+	if (label) { str += L"  "; str += label; }
 	return str;
 }
 
