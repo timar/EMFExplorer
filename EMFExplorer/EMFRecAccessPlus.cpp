@@ -34,6 +34,83 @@ void EMFRecAccessGDIPlusObjWrapper::CacheProperties(const CachePropertiesContext
 	pNode->AddValue(L"Version", m_obj->Version, true);
 }
 
+static CStringW PenDataFlagsText(u32t flags)
+{
+	CStringW str;
+	str.Format(L"0x%08X", flags);
+	CStringW f;
+	if (flags & (u32t)OPenData::Transform)		{ f += L"Transform"; }
+	if (flags & (u32t)OPenData::StartCap)		{ if (!f.IsEmpty()) f += L" | "; f += L"StartCap"; }
+	if (flags & (u32t)OPenData::EndCap)			{ if (!f.IsEmpty()) f += L" | "; f += L"EndCap"; }
+	if (flags & (u32t)OPenData::Join)			{ if (!f.IsEmpty()) f += L" | "; f += L"Join"; }
+	if (flags & (u32t)OPenData::MiterLimit)		{ if (!f.IsEmpty()) f += L" | "; f += L"MiterLimit"; }
+	if (flags & (u32t)OPenData::LineStyle)		{ if (!f.IsEmpty()) f += L" | "; f += L"LineStyle"; }
+	if (flags & (u32t)OPenData::DashedLineCap)	{ if (!f.IsEmpty()) f += L" | "; f += L"DashedLineCap"; }
+	if (flags & (u32t)OPenData::DashedLineOffset){ if (!f.IsEmpty()) f += L" | "; f += L"DashedLineOffset"; }
+	if (flags & (u32t)OPenData::DashedLine)		{ if (!f.IsEmpty()) f += L" | "; f += L"DashedLine"; }
+	if (flags & (u32t)OPenData::NonCenter)		{ if (!f.IsEmpty()) f += L" | "; f += L"NonCenter"; }
+	if (flags & (u32t)OPenData::CompoundLine)	{ if (!f.IsEmpty()) f += L" | "; f += L"CompoundLine"; }
+	if (flags & (u32t)OPenData::CustomStartCap)	{ if (!f.IsEmpty()) f += L" | "; f += L"CustomStartCap"; }
+	if (flags & (u32t)OPenData::CustomEndCap)	{ if (!f.IsEmpty()) f += L" | "; f += L"CustomEndCap"; }
+	if (!f.IsEmpty()) { str += L"  "; str += f; }
+	return str;
+}
+
+static CStringW FontStyleFlagsText(i32t flags)
+{
+	CStringW str;
+	str.Format(L"0x%08X", (u32t)flags);
+	CStringW f;
+	if (flags & (i32t)OFontStyle::Bold)			{ f += L"Bold"; }
+	if (flags & (i32t)OFontStyle::Italic)		{ if (!f.IsEmpty()) f += L" | "; f += L"Italic"; }
+	if (flags & (i32t)OFontStyle::Underline)	{ if (!f.IsEmpty()) f += L" | "; f += L"Underline"; }
+	if (flags & (i32t)OFontStyle::Strikeout)	{ if (!f.IsEmpty()) f += L" | "; f += L"Strikeout"; }
+	if (!f.IsEmpty()) { str += L"  "; str += f; }
+	return str;
+}
+
+static CStringW StringFormatFlagsText(u32t flags)
+{
+	CStringW str;
+	str.Format(L"0x%08X", flags);
+	CStringW f;
+	if (flags & (u32t)OStringFormat::DirectionRightToLeft)	{ f += L"DirectionRightToLeft"; }
+	if (flags & (u32t)OStringFormat::DirectionVertical)		{ if (!f.IsEmpty()) f += L" | "; f += L"DirectionVertical"; }
+	if (flags & (u32t)OStringFormat::NoFitBlackBox)			{ if (!f.IsEmpty()) f += L" | "; f += L"NoFitBlackBox"; }
+	if (flags & (u32t)OStringFormat::DisplayFormatControl)	{ if (!f.IsEmpty()) f += L" | "; f += L"DisplayFormatControl"; }
+	if (flags & (u32t)OStringFormat::NoFontFallback)		{ if (!f.IsEmpty()) f += L" | "; f += L"NoFontFallback"; }
+	if (flags & (u32t)OStringFormat::MeasureTrailingSpaces)	{ if (!f.IsEmpty()) f += L" | "; f += L"MeasureTrailingSpaces"; }
+	if (flags & (u32t)OStringFormat::NoWrap)				{ if (!f.IsEmpty()) f += L" | "; f += L"NoWrap"; }
+	if (flags & (u32t)OStringFormat::LineLimit)				{ if (!f.IsEmpty()) f += L" | "; f += L"LineLimit"; }
+	if (flags & (u32t)OStringFormat::NoClip)				{ if (!f.IsEmpty()) f += L" | "; f += L"NoClip"; }
+	if (flags & (u32t)OStringFormat::BypassGDI)				{ if (!f.IsEmpty()) f += L" | "; f += L"BypassGDI"; }
+	if (!f.IsEmpty()) { str += L"  "; str += f; }
+	return str;
+}
+
+static CStringW PaletteStyleFlagsText(u32t flags)
+{
+	CStringW str;
+	str.Format(L"0x%08X", flags);
+	CStringW f;
+	if (flags & (u32t)OPaletteStyle::HasAlpha)	{ f += L"HasAlpha"; }
+	if (flags & (u32t)OPaletteStyle::GrayScale)	{ if (!f.IsEmpty()) f += L" | "; f += L"GrayScale"; }
+	if (flags & (u32t)OPaletteStyle::Halftone)	{ if (!f.IsEmpty()) f += L" | "; f += L"Halftone"; }
+	if (!f.IsEmpty()) { str += L"  "; str += f; }
+	return str;
+}
+
+static CStringW CustomLineCapDataFlagsText(u32t flags)
+{
+	CStringW str;
+	str.Format(L"0x%08X", flags);
+	CStringW f;
+	if (flags & (u32t)OCustomLineCapData::FillPath)	{ f += L"FillPath"; }
+	if (flags & (u32t)OCustomLineCapData::LinePath)	{ if (!f.IsEmpty()) f += L" | "; f += L"LinePath"; }
+	if (!f.IsEmpty()) { str += L"  "; str += f; }
+	return str;
+}
+
 class EMFRecAccessGDIPlusBrushWrapper : public EMFRecAccessGDIPlusObjWrapper
 {
 public:
@@ -65,6 +142,18 @@ protected:
 		auto pObj = (OEmfPlusPen*)m_obj.get();
 		auto pBranch = pNode->AddBranch(L"Pen");
 		EmfStruct2Properties::Build(*pObj, pBranch.get());
+		for (auto& node : pBranch->sub)
+		{
+			if (node->name == L"PenData")
+			{
+				for (auto& sub : node->sub)
+				{
+					if (sub->name == L"PenDataFlags")
+						sub->text = PenDataFlagsText(pObj->PenData.PenDataFlags);
+				}
+				break;
+			}
+		}
 	}
 };
 
@@ -240,6 +329,14 @@ protected:
 		auto pObj = (OEmfPlusFont*)m_obj.get();
 		auto pBranch = pNode->AddBranch(L"Font");
 		EmfStruct2Properties::Build(*pObj, pBranch.get());
+		for (auto& node : pBranch->sub)
+		{
+			if (node->name == L"FontStyleFlags")
+			{
+				node->text = FontStyleFlagsText(pObj->FontStyleFlags);
+				break;
+			}
+		}
 	}
 };
 
@@ -257,6 +354,14 @@ protected:
 		auto pObj = (OEmfPlusStringFormat*)m_obj.get();
 		auto pBranch = pNode->AddBranch(L"StringFormat");
 		EmfStruct2Properties::Build(*pObj, pBranch.get());
+		for (auto& node : pBranch->sub)
+		{
+			if (node->name == L"StringFormatFlags")
+			{
+				node->text = StringFormatFlagsText(pObj->StringFormatFlags);
+				break;
+			}
+		}
 	}
 };
 
@@ -291,6 +396,21 @@ protected:
 		auto pObj = (OEmfPlusCustomLineCap*)m_obj.get();
 		auto pBranch = pNode->AddBranch(L"CustomLineCap");
 		EmfStruct2Properties::Build(*pObj, pBranch.get());
+		if (pObj->CustomLineCapData.is_enabled())
+		{
+			for (auto& node : pBranch->sub)
+			{
+				if (node->name == L"CustomLineCapData")
+				{
+					for (auto& sub : node->sub)
+					{
+						if (sub->name == L"CustomLineCapDataFlags")
+							sub->text = CustomLineCapDataFlagsText(pObj->CustomLineCapData->CustomLineCapDataFlags);
+					}
+					break;
+				}
+			}
+		}
 	}
 };
 
@@ -1082,7 +1202,10 @@ void EMFRecAccessGDIPlusRecDrawImage::CacheProperties(const CachePropertiesConte
 
 	auto nID = (u8t)(m_recInfo.Flags & OEmfPlusRecDrawImage::FlagObjectIDMask);
 	m_propsCached->AddValue(L"ImageID", nID);
-	m_propsCached->AddValue(L"ImageAttributesID", m_recDataCached.ImageAttributesID);
+	if (m_recDataCached.ImageAttributesID == (u32t)InvalidObjectID)
+		m_propsCached->AddText(L"ImageAttributesID", L"(none)");
+	else
+		m_propsCached->AddValue(L"ImageAttributesID", m_recDataCached.ImageAttributesID);
 	m_propsCached->AddText(L"SrcUnit", EMFPlusUnitTypeText(m_recDataCached.SrcUnit));
 	m_propsCached->sub.emplace_back(std::make_shared<PropertyNodePlusRectF>(L"SrcRect", m_recDataCached.SrcRect));
 	m_propsCached->sub.emplace_back(std::make_shared<PropertyNodePlusRectData>(L"RectData", m_recDataCached.RectData));
@@ -1138,7 +1261,10 @@ void EMFRecAccessGDIPlusRecDrawImagePoints::CacheProperties(const CachePropertie
 
 	auto nID = (u8t)(m_recInfo.Flags & OEmfPlusRecDrawImagePoints::FlagObjectIDMask);
 	m_propsCached->AddValue(L"ImageID", nID);
-	m_propsCached->AddValue(L"ImageAttributesID", m_recDataCached.ImageAttributesID);
+	if (m_recDataCached.ImageAttributesID == (u32t)InvalidObjectID)
+		m_propsCached->AddText(L"ImageAttributesID", L"(none)");
+	else
+		m_propsCached->AddValue(L"ImageAttributesID", m_recDataCached.ImageAttributesID);
 	m_propsCached->AddText(L"SrcUnit", EMFPlusUnitTypeText(m_recDataCached.SrcUnit));
 	m_propsCached->sub.emplace_back(std::make_shared<PropertyNodePlusRectF>(L"SrcRect", m_recDataCached.SrcRect));
 	m_propsCached->sub.emplace_back(std::make_shared<PropertyNodePlusPointDataArray>(L"PointData", m_recDataCached.PointData));
@@ -1491,6 +1617,7 @@ void EMFRecAccessGDIPlusRecBeginContainer::CacheProperties(const CacheProperties
 {
 	EMFRecAccessGDIPlusStateCat::CacheProperties(ctxt);
 	auto pRec = (OEmfPlusRecBeginContainer*)m_recInfo.Data;
+	m_propsCached->AddText(L"PageUnit", EMFPlusUnitTypeText(OEmfPlusRecBeginContainer::GetUnitType(m_recInfo.Flags)));
 	m_propsCached->sub.emplace_back(std::make_shared<PropertyNodePlusRectF>(L"DestRect", pRec->DestRect));
 	m_propsCached->sub.emplace_back(std::make_shared<PropertyNodePlusRectF>(L"SrcRect", pRec->SrcRect));
 	m_propsCached->AddValue(L"StackIndex", pRec->StackIndex);
@@ -1562,5 +1689,6 @@ void EMFRecAccessGDIPlusRecSetPageTransform::CacheProperties(const CacheProperti
 {
 	EMFRecAccessGDIPlusTransformCat::CacheProperties(ctxt);
 	auto* pRec = (OEmfPlusRecSetPageTransform*)m_recInfo.Data;
+	m_propsCached->AddText(L"PageUnit", EMFPlusUnitTypeText(OEmfPlusRecSetPageTransform::GetUnitType(m_recInfo.Flags)));
 	m_propsCached->AddValue(L"PageScale", pRec->PageScale);
 }

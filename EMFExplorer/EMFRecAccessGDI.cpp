@@ -2118,7 +2118,7 @@ static CStringW RasterOpText(DWORD dwRop)
 			str += flags;
 			if (label) { str += L" | "; str += label; }
 		}
-		else
+		else if (label)
 			str += label;
 	}
 	return str;
