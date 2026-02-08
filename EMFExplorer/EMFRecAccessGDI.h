@@ -495,6 +495,8 @@ public:
 	LPCWSTR GetRecordName() const override { return L"EMR_CREATEBRUSHINDIRECT"; }
 
 	emfplus::OEmfPlusRecordType GetRecordType() const override { return emfplus::EmfRecordTypeCreateBrushIndirect; }
+
+	bool GetRecordColor(COLORREF& cr) const override;
 private:
 	void Preprocess(EMFAccess* pEMF) override;
 

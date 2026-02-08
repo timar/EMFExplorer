@@ -145,6 +145,17 @@ void EMFRecAccessGDIRecCreateBrushIndirect::Preprocess(EMFAccess* pEMF)
 	pEMF->SetObjectToTable(pRec->ihBrush, this, false);
 }
 
+bool EMFRecAccessGDIRecCreateBrushIndirect::GetRecordColor(COLORREF& cr) const
+{
+	auto pRec = (const EMRCREATEBRUSHINDIRECT*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
+	if (pRec)
+	{
+		cr = pRec->lb.lbColor;
+		return true;
+	}
+	return false;
+}
+
 void EMFRecAccessGDIRecCreateBrushIndirect::CacheProperties(const CachePropertiesContext& ctxt)
 {
 	EMFRecAccessGDIObjectCat::CacheProperties(ctxt);
