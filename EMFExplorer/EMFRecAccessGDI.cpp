@@ -32,6 +32,7 @@ static CStringW RasterOpText(DWORD dwRop);
 static CStringW BlendFunctionText(DWORD dwRop);
 static CStringW DIBColorsText(DWORD iUsage);
 static CStringW BiCompressionText(DWORD biCompression);
+static CStringW ExtTextOutOptionsText(UINT fuOptions);
 
 const ENHMETARECORD* EMFRecAccessGDIRec::GetGDIRecord(const emfplus::OEmfPlusRecInfo& rec)
 {
@@ -593,7 +594,7 @@ LPCWSTR EMFRecAccessGDIRecExtTextOutA::GetRecordText() const
 	if (m_strText.IsEmpty())
 	{
 		auto pRec = (const EMREXTTEXTOUTA*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
-		if (pRec && pRec->emrtext.nChars > 0 && pRec->emrtext.offString)
+		if (pRec && !(pRec->emrtext.fOptions & ETO_GLYPH_INDEX) && pRec->emrtext.nChars > 0 && pRec->emrtext.offString)
 		{
 			LPCSTR pszText = (LPCSTR)((const BYTE*)pRec + pRec->emrtext.offString);
 			m_strText = CStringW(pszText, pRec->emrtext.nChars);
@@ -613,9 +614,29 @@ void EMFRecAccessGDIRecExtTextOutA::CacheProperties(const CachePropertiesContext
 		m_propsCached->AddValue(L"exScale", pRec->exScale);
 		m_propsCached->AddValue(L"eyScale", pRec->eyScale);
 		EmfStruct2Properties::BuildField("emrtext", pRec->emrtext, m_propsCached.get());
-		auto pszText = GetRecordText();
-		if (pszText)
-			m_propsCached->AddText(L"Text", pszText);
+		auto& pEmrtext = m_propsCached->sub.back();
+		for (auto& child : pEmrtext->sub)
+		{
+			if (child->name == L"fOptions")
+			{
+				child->text = ExtTextOutOptionsText(pRec->emrtext.fOptions);
+				break;
+			}
+		}
+		if (pRec->emrtext.fOptions & ETO_GLYPH_INDEX)
+		{
+			if (pRec->emrtext.nChars > 0 && pRec->emrtext.offString)
+			{
+				auto pGlyphs = (const emfplus::u16t*)((const BYTE*)pRec + pRec->emrtext.offString);
+				m_propsCached->sub.emplace_back(std::make_shared<PropertyNodeArray>(L"Glyphs", pGlyphs, (size_t)pRec->emrtext.nChars));
+			}
+		}
+		else
+		{
+			auto pszText = GetRecordText();
+			if (pszText)
+				m_propsCached->AddText(L"Text", pszText);
+		}
 	}
 }
 
@@ -624,7 +645,7 @@ LPCWSTR EMFRecAccessGDIRecExtTextOutW::GetRecordText() const
 	if (m_strText.IsEmpty())
 	{
 		auto pRec = (const EMREXTTEXTOUTW*)EMFRecAccessGDIRec::GetGDIRecord(m_recInfo);
-		if (pRec && pRec->emrtext.nChars > 0 && pRec->emrtext.offString)
+		if (pRec && !(pRec->emrtext.fOptions & ETO_GLYPH_INDEX) && pRec->emrtext.nChars > 0 && pRec->emrtext.offString)
 		{
 			LPCWSTR pszText = (LPCWSTR)((const BYTE*)pRec + pRec->emrtext.offString);
 			m_strText.SetString(pszText, pRec->emrtext.nChars);
@@ -644,9 +665,29 @@ void EMFRecAccessGDIRecExtTextOutW::CacheProperties(const CachePropertiesContext
 		m_propsCached->AddValue(L"exScale", pRec->exScale);
 		m_propsCached->AddValue(L"eyScale", pRec->eyScale);
 		EmfStruct2Properties::BuildField("emrtext", pRec->emrtext, m_propsCached.get());
-		auto pszText = GetRecordText();
-		if (pszText)
-			m_propsCached->AddText(L"Text", pszText);
+		auto& pEmrtext = m_propsCached->sub.back();
+		for (auto& child : pEmrtext->sub)
+		{
+			if (child->name == L"fOptions")
+			{
+				child->text = ExtTextOutOptionsText(pRec->emrtext.fOptions);
+				break;
+			}
+		}
+		if (pRec->emrtext.fOptions & ETO_GLYPH_INDEX)
+		{
+			if (pRec->emrtext.nChars > 0 && pRec->emrtext.offString)
+			{
+				auto pGlyphs = (const emfplus::u16t*)((const BYTE*)pRec + pRec->emrtext.offString);
+				m_propsCached->sub.emplace_back(std::make_shared<PropertyNodeArray>(L"Glyphs", pGlyphs, (size_t)pRec->emrtext.nChars));
+			}
+		}
+		else
+		{
+			auto pszText = GetRecordText();
+			if (pszText)
+				m_propsCached->AddText(L"Text", pszText);
+		}
 	}
 }
 
@@ -1607,7 +1648,7 @@ LPCWSTR EMFRecAccessGDIRecPolyTextOutA::GetRecordText() const
 			for (LONG ii = 0; ii < pRec->cStrings; ++ii)
 			{
 				auto& emt = pRec->aemrtext[ii];
-				if (emt.nChars > 0 && emt.offString)
+				if (!(emt.fOptions & ETO_GLYPH_INDEX) && emt.nChars > 0 && emt.offString)
 				{
 					if (!m_strText.IsEmpty())
 						m_strText += L' ';
@@ -1631,6 +1672,22 @@ void EMFRecAccessGDIRecPolyTextOutA::CacheProperties(const CachePropertiesContex
 		m_propsCached->AddValue(L"exScale", pRec->exScale);
 		m_propsCached->AddValue(L"eyScale", pRec->eyScale);
 		m_propsCached->AddValue(L"cStrings", pRec->cStrings);
+		for (LONG ii = 0; ii < pRec->cStrings; ++ii)
+		{
+			auto& emt = pRec->aemrtext[ii];
+			CStringW branchName;
+			branchName.Format(L"aemrtext[%d]", ii);
+			EmfStruct2Properties::BuildField(CStringA(branchName), emt, m_propsCached.get());
+			auto& pBranch = m_propsCached->sub.back();
+			for (auto& child : pBranch->sub)
+			{
+				if (child->name == L"fOptions")
+				{
+					child->text = ExtTextOutOptionsText(emt.fOptions);
+					break;
+				}
+			}
+		}
 		auto pszText = GetRecordText();
 		if (pszText)
 			m_propsCached->AddText(L"Text", pszText);
@@ -1647,7 +1704,7 @@ LPCWSTR EMFRecAccessGDIRecPolyTextOutW::GetRecordText() const
 			for (LONG ii = 0; ii < pRec->cStrings; ++ii)
 			{
 				auto& emt = pRec->aemrtext[ii];
-				if (emt.nChars > 0 && emt.offString)
+				if (!(emt.fOptions & ETO_GLYPH_INDEX) && emt.nChars > 0 && emt.offString)
 				{
 					if (!m_strText.IsEmpty())
 						m_strText += L' ';
@@ -1671,6 +1728,22 @@ void EMFRecAccessGDIRecPolyTextOutW::CacheProperties(const CachePropertiesContex
 		m_propsCached->AddValue(L"exScale", pRec->exScale);
 		m_propsCached->AddValue(L"eyScale", pRec->eyScale);
 		m_propsCached->AddValue(L"cStrings", pRec->cStrings);
+		for (LONG ii = 0; ii < pRec->cStrings; ++ii)
+		{
+			auto& emt = pRec->aemrtext[ii];
+			CStringW branchName;
+			branchName.Format(L"aemrtext[%d]", ii);
+			EmfStruct2Properties::BuildField(CStringA(branchName), emt, m_propsCached.get());
+			auto& pBranch = m_propsCached->sub.back();
+			for (auto& child : pBranch->sub)
+			{
+				if (child->name == L"fOptions")
+				{
+					child->text = ExtTextOutOptionsText(emt.fOptions);
+					break;
+				}
+			}
+		}
 		auto pszText = GetRecordText();
 		if (pszText)
 			m_propsCached->AddText(L"Text", pszText);
@@ -2037,7 +2110,7 @@ static CStringW FontQualityText(BYTE lfQuality)
 	return str;
 }
 
-static CStringW SmallTextOutOptionsText(UINT fuOptions)
+static CStringW ExtTextOutOptionsText(UINT fuOptions)
 {
 	CStringW str;
 	str.Format(L"0x%08X", fuOptions);
@@ -2189,7 +2262,7 @@ LPCWSTR EMFRecAccessGDIRecSmallTextOut::GetRecordText() const
 	if (m_strText.IsEmpty() && m_recInfo.Data && m_recInfo.DataSize >= sizeof(EMRSMALLTEXTOUT_DATA))
 	{
 		auto pRec = (const EMRSMALLTEXTOUT_DATA*)m_recInfo.Data;
-		if (pRec->cChars > 0)
+		if (pRec->cChars > 0 && !(pRec->fuOptions & ETO_GLYPH_INDEX))
 		{
 			auto pText = m_recInfo.Data + sizeof(EMRSMALLTEXTOUT_DATA);
 			if (pRec->fuOptions & ETO_SMALL_CHARS)
@@ -2216,13 +2289,25 @@ void EMFRecAccessGDIRecSmallTextOut::CacheProperties(const CachePropertiesContex
 		m_propsCached->AddValue(L"x", pRec->x);
 		m_propsCached->AddValue(L"y", pRec->y);
 		m_propsCached->AddValue(L"cChars", pRec->cChars);
-		m_propsCached->AddText(L"fuOptions", SmallTextOutOptionsText(pRec->fuOptions));
+		m_propsCached->AddText(L"fuOptions", ExtTextOutOptionsText(pRec->fuOptions));
 		m_propsCached->AddText(L"iGraphicsMode", GraphicsModeText(pRec->iGraphicsMode));
 		m_propsCached->AddValue(L"exScale", pRec->exScale);
 		m_propsCached->AddValue(L"eyScale", pRec->eyScale);
-		auto pszText = GetRecordText();
-		if (pszText)
-			m_propsCached->AddText(L"Text", pszText);
+		if (pRec->fuOptions & ETO_GLYPH_INDEX)
+		{
+			if (pRec->cChars > 0)
+			{
+				auto pGlyphs = (const emfplus::u16t*)(m_recInfo.Data + sizeof(EMRSMALLTEXTOUT_DATA));
+				if (sizeof(EMRSMALLTEXTOUT_DATA) + pRec->cChars * sizeof(emfplus::u16t) <= m_recInfo.DataSize)
+					m_propsCached->sub.emplace_back(std::make_shared<PropertyNodeArray>(L"Glyphs", pGlyphs, (size_t)pRec->cChars));
+			}
+		}
+		else
+		{
+			auto pszText = GetRecordText();
+			if (pszText)
+				m_propsCached->AddText(L"Text", pszText);
+		}
 	}
 }
 
