@@ -562,9 +562,14 @@ void EMFRecAccessGDIRecExtCreateFontIndirect::CacheProperties(const CachePropert
 	if (pRec)
 	{
 		m_propsCached->AddValue(L"ihFont", pRec->ihFont);
-		auto pElfw = m_propsCached->AddBranch(L"elfw");
+		// The EMF spec allows this record to contain either a bare LOGFONTW (92 bytes)
+		// or a full EXTLOGFONTW. Check the record size to avoid reading beyond the data.
+		// Note: m_recInfo.DataSize is the data size after the EMR header;
+		// subtract sizeof(DWORD) for the ihFont field to get the font struct size.
+		bool hasExtLogFont = (m_recInfo.DataSize >= sizeof(DWORD) + sizeof(EXTLOGFONTW));
+		auto pElfw = m_propsCached->AddBranch(hasExtLogFont ? L"elfw" : L"LogFont");
 		auto& lf = pRec->elfw.elfLogFont;
-		auto pLf = pElfw->AddBranch(L"elfLogFont");
+		auto pLf = hasExtLogFont ? pElfw->AddBranch(L"elfLogFont") : pElfw;
 		pLf->AddValue(L"lfHeight", lf.lfHeight);
 		pLf->AddValue(L"lfWidth", lf.lfWidth);
 		pLf->AddValue(L"lfEscapement", lf.lfEscapement);
@@ -579,13 +584,16 @@ void EMFRecAccessGDIRecExtCreateFontIndirect::CacheProperties(const CachePropert
 		pLf->AddText(L"lfQuality", FontQualityText(lf.lfQuality));
 		pLf->AddValue(L"lfPitchAndFamily", lf.lfPitchAndFamily);
 		pLf->AddText(L"lfFaceName", lf.lfFaceName);
-		pElfw->AddText(L"elfFullName", pRec->elfw.elfFullName);
-		pElfw->AddText(L"elfStyle", pRec->elfw.elfStyle);
-		pElfw->AddValue(L"elfVersion", pRec->elfw.elfVersion);
-		pElfw->AddValue(L"elfStyleSize", pRec->elfw.elfStyleSize);
-		pElfw->AddValue(L"elfMatch", pRec->elfw.elfMatch);
-		pElfw->AddValue(L"elfCulture", pRec->elfw.elfCulture);
-		EmfStruct2Properties::BuildField("elfPanose", pRec->elfw.elfPanose, pElfw.get());
+		if (hasExtLogFont)
+		{
+			pElfw->AddText(L"elfFullName", pRec->elfw.elfFullName);
+			pElfw->AddText(L"elfStyle", pRec->elfw.elfStyle);
+			pElfw->AddValue(L"elfVersion", pRec->elfw.elfVersion);
+			pElfw->AddValue(L"elfStyleSize", pRec->elfw.elfStyleSize);
+			pElfw->AddValue(L"elfMatch", pRec->elfw.elfMatch);
+			pElfw->AddValue(L"elfCulture", pRec->elfw.elfCulture);
+			EmfStruct2Properties::BuildField("elfPanose", pRec->elfw.elfPanose, pElfw.get());
+		}
 	}
 }
 
