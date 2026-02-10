@@ -69,15 +69,21 @@ void EMFRecAccessGDIRecHeader::CacheProperties(const CachePropertiesContext& ctx
 	m_propsCached->AddValue(L"nPalEntries", pRec->nPalEntries);
 	m_propsCached->sub.emplace_back(std::make_shared<PropertyNodeSizeInt>(L"szlDevice", pRec->szlDevice));
 	m_propsCached->sub.emplace_back(std::make_shared<PropertyNodeSizeInt>(L"szlMillimeters", pRec->szlMillimeters));
-	if (pRec->cbPixelFormat && pRec->offPixelFormat)
+	// The ENHMETAHEADER can be shorter in older EMF versions.
+	// Fields cbPixelFormat/offPixelFormat/bOpenGL need data size >= 92;
+	// szlMicrometers needs data size >= 100.
+	if (m_recInfo.DataSize >= 92)
 	{
-		ASSERT(pRec->offPixelFormat == sizeof(PIXELFORMATDESCRIPTOR));
-		auto pixelFormat = (const PIXELFORMATDESCRIPTOR*)((const char*)pRec + pRec->offPixelFormat);
-		auto pPixelFormatNode = m_propsCached->AddBranch(L"PixelFormat");
-		EmfStruct2Properties::Build(*pixelFormat, pPixelFormatNode.get());
+		if (pRec->cbPixelFormat && pRec->offPixelFormat)
+		{
+			auto pixelFormat = (const PIXELFORMATDESCRIPTOR*)((const char*)pRec + pRec->offPixelFormat);
+			auto pPixelFormatNode = m_propsCached->AddBranch(L"PixelFormat");
+			EmfStruct2Properties::Build(*pixelFormat, pPixelFormatNode.get());
+		}
+		m_propsCached->AddValue(L"bOpenGL", pRec->bOpenGL);
 	}
-	m_propsCached->AddValue(L"bOpenGL", pRec->bOpenGL);
-	m_propsCached->sub.emplace_back(std::make_shared<PropertyNodeSizeInt>(L"szlMicrometers", pRec->szlMicrometers));
+	if (m_recInfo.DataSize >= 100)
+		m_propsCached->sub.emplace_back(std::make_shared<PropertyNodeSizeInt>(L"szlMicrometers", pRec->szlMicrometers));
 
 	auto pPlusNode = m_propsCached->AddBranch(L"GDI+ Header");
 	auto& hdr = ctxt.pEMF->GetMetafileHeader();
