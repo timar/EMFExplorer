@@ -1766,7 +1766,7 @@ void EMFRecAccessGDIRecPolyTextOutW::CacheProperties(const CachePropertiesContex
 
 // EMR_SMALLTEXTOUT (record type 108) - undocumented structure
 // Data layout (after EMR header): x, y, cChars, fuOptions, iGraphicsMode, exScale, eyScale,
-// rclBounds (always present), then text data
+// rclBounds (only if !(fuOptions & ETO_NO_RECT)), then text data
 struct EMRSMALLTEXTOUT_DATA
 {
 	LONG    x;
@@ -1776,8 +1776,10 @@ struct EMRSMALLTEXTOUT_DATA
 	UINT    iGraphicsMode;
 	FLOAT   exScale;
 	FLOAT   eyScale;
-	RECTL   rclBounds;
+	// RECTL rclBounds follows only if !(fuOptions & ETO_NO_RECT)
+	// text data follows after rclBounds (if present) or after eyScale
 };
+#define ETO_NO_RECT     0x100
 #define ETO_SMALL_CHARS 0x200
 
 static CStringW MapModeText(DWORD iMode)
@@ -2133,6 +2135,7 @@ static CStringW ExtTextOutOptionsText(UINT fuOptions)
 	if (fuOptions & ETO_CLIPPED)	{ if (!flags.IsEmpty()) flags += L" | "; flags += L"ETO_CLIPPED"; }
 	if (fuOptions & ETO_GLYPH_INDEX){ if (!flags.IsEmpty()) flags += L" | "; flags += L"ETO_GLYPH_INDEX"; }
 	if (fuOptions & ETO_RTLREADING)	{ if (!flags.IsEmpty()) flags += L" | "; flags += L"ETO_RTLREADING"; }
+	if (fuOptions & ETO_NO_RECT)	{ if (!flags.IsEmpty()) flags += L" | "; flags += L"ETO_NO_RECT"; }
 	if (fuOptions & ETO_SMALL_CHARS){ if (!flags.IsEmpty()) flags += L" | "; flags += L"ETO_SMALL_CHARS (ANSI)"; }
 	if (fuOptions & ETO_PDY)		{ if (!flags.IsEmpty()) flags += L" | "; flags += L"ETO_PDY"; }
 	if (!flags.IsEmpty())
@@ -2278,15 +2281,18 @@ LPCWSTR EMFRecAccessGDIRecSmallTextOut::GetRecordText() const
 		auto pRec = (const EMRSMALLTEXTOUT_DATA*)m_recInfo.Data;
 		if (pRec->cChars > 0 && !(pRec->fuOptions & ETO_GLYPH_INDEX))
 		{
-			auto pText = m_recInfo.Data + sizeof(EMRSMALLTEXTOUT_DATA);
+			size_t textOffset = sizeof(EMRSMALLTEXTOUT_DATA);
+			if (!(pRec->fuOptions & ETO_NO_RECT))
+				textOffset += sizeof(RECTL);
+			auto pText = m_recInfo.Data + textOffset;
 			if (pRec->fuOptions & ETO_SMALL_CHARS)
 			{
-				if (sizeof(EMRSMALLTEXTOUT_DATA) + pRec->cChars <= m_recInfo.DataSize)
+				if (textOffset + pRec->cChars <= m_recInfo.DataSize)
 					m_strText = CStringW((LPCSTR)pText, pRec->cChars);
 			}
 			else
 			{
-				if (sizeof(EMRSMALLTEXTOUT_DATA) + pRec->cChars * sizeof(WCHAR) <= m_recInfo.DataSize)
+				if (textOffset + pRec->cChars * sizeof(WCHAR) <= m_recInfo.DataSize)
 					m_strText.SetString((LPCWSTR)pText, pRec->cChars);
 			}
 		}
@@ -2307,12 +2313,20 @@ void EMFRecAccessGDIRecSmallTextOut::CacheProperties(const CachePropertiesContex
 		m_propsCached->AddText(L"iGraphicsMode", GraphicsModeText(pRec->iGraphicsMode));
 		m_propsCached->AddValue(L"exScale", pRec->exScale);
 		m_propsCached->AddValue(L"eyScale", pRec->eyScale);
+		size_t textOffset = sizeof(EMRSMALLTEXTOUT_DATA);
+		if (!(pRec->fuOptions & ETO_NO_RECT))
+		{
+			auto pBounds = (const RECTL*)(m_recInfo.Data + sizeof(EMRSMALLTEXTOUT_DATA));
+			if (textOffset + sizeof(RECTL) <= m_recInfo.DataSize)
+				m_propsCached->sub.emplace_back(std::make_shared<PropertyNodeRectInt>(L"rclBounds", *pBounds));
+			textOffset += sizeof(RECTL);
+		}
 		if (pRec->fuOptions & ETO_GLYPH_INDEX)
 		{
 			if (pRec->cChars > 0)
 			{
-				auto pGlyphs = (const emfplus::u16t*)(m_recInfo.Data + sizeof(EMRSMALLTEXTOUT_DATA));
-				if (sizeof(EMRSMALLTEXTOUT_DATA) + pRec->cChars * sizeof(emfplus::u16t) <= m_recInfo.DataSize)
+				auto pGlyphs = (const emfplus::u16t*)(m_recInfo.Data + textOffset);
+				if (textOffset + pRec->cChars * sizeof(emfplus::u16t) <= m_recInfo.DataSize)
 					m_propsCached->sub.emplace_back(std::make_shared<PropertyNodeArray>(L"Glyphs", pGlyphs, (size_t)pRec->cChars));
 			}
 		}
