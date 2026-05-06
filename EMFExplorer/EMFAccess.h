@@ -58,6 +58,13 @@ public:
 
 	bool SetObjectToTable(size_t index, EMFRecAccess* pRec, bool bPlus);
 
+	// WMF object table: indices are assigned implicitly when CreateXxx records
+	// are encountered (first free slot wins) and freed by META_DELETEOBJECT.
+	// The slots are stored in the GDI object table (a metafile is either EMF
+	// or WMF, never both).
+	size_t AddWMFObject(EMFRecAccess* pRec);
+	void ClearWMFObject(size_t index);
+
 	bool SaveToFile(LPCWSTR szPath) const;
 
 	const std::wstring& GetNestedPath() const

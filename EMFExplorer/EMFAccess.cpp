@@ -101,6 +101,7 @@ using namespace emfplus;
 
 #include "EMFRecAccessGDI.h"
 #include "EMFRecAccessPlus.h"
+#include "EMFRecAccessWMF.h"
 
 EMFAccess::EMFAccess(const emfplus::memory_vector& data)
 	: EMFAccess(data.data(), data.size())
@@ -889,6 +890,94 @@ bool EMFAccess::HandleEMFRecord(OEmfPlusRecordType type, UINT flags, UINT dataSi
 	case EmfPlusRecordTypeSetTSClip:
 		pRecAccess = new EMFRecAccessGDIPlusRecSetTSClip;
 		break;
+
+	// --- WMF records (when GDI+ is replaying a WMF/WMFPLACEABLE source) ---
+	case WmfRecordTypeSetBkColor:           pRecAccess = new EMFRecAccessWMFRecSetBkColor;          break;
+	case WmfRecordTypeSetBkMode:            pRecAccess = new EMFRecAccessWMFRecSetBkMode;           break;
+	case WmfRecordTypeSetMapMode:           pRecAccess = new EMFRecAccessWMFRecSetMapMode;          break;
+	case WmfRecordTypeSetROP2:              pRecAccess = new EMFRecAccessWMFRecSetROP2;             break;
+	case WmfRecordTypeSetRelAbs:            pRecAccess = new EMFRecAccessWMFRecSetRelAbs;           break;
+	case WmfRecordTypeSetPolyFillMode:      pRecAccess = new EMFRecAccessWMFRecSetPolyFillMode;     break;
+	case WmfRecordTypeSetStretchBltMode:    pRecAccess = new EMFRecAccessWMFRecSetStretchBltMode;   break;
+	case WmfRecordTypeSetTextCharExtra:     pRecAccess = new EMFRecAccessWMFRecSetTextCharExtra;    break;
+	case WmfRecordTypeSetTextColor:         pRecAccess = new EMFRecAccessWMFRecSetTextColor;        break;
+	case WmfRecordTypeSetTextJustification: pRecAccess = new EMFRecAccessWMFRecSetTextJustification; break;
+	case WmfRecordTypeSetWindowOrg:         pRecAccess = new EMFRecAccessWMFRecSetWindowOrg;        break;
+	case WmfRecordTypeSetWindowExt:         pRecAccess = new EMFRecAccessWMFRecSetWindowExt;        break;
+	case WmfRecordTypeSetViewportOrg:       pRecAccess = new EMFRecAccessWMFRecSetViewportOrg;      break;
+	case WmfRecordTypeSetViewportExt:       pRecAccess = new EMFRecAccessWMFRecSetViewportExt;      break;
+	case WmfRecordTypeOffsetWindowOrg:      pRecAccess = new EMFRecAccessWMFRecOffsetWindowOrg;     break;
+	case WmfRecordTypeScaleWindowExt:       pRecAccess = new EMFRecAccessWMFRecScaleWindowExt;      break;
+	case WmfRecordTypeOffsetViewportOrg:    pRecAccess = new EMFRecAccessWMFRecOffsetViewportOrg;   break;
+	case WmfRecordTypeScaleViewportExt:     pRecAccess = new EMFRecAccessWMFRecScaleViewportExt;    break;
+	case WmfRecordTypeSetTextAlign:         pRecAccess = new EMFRecAccessWMFRecSetTextAlign;        break;
+	case WmfRecordTypeSetMapperFlags:       pRecAccess = new EMFRecAccessWMFRecSetMapperFlags;      break;
+	case WmfRecordTypeSetLayout:            pRecAccess = new EMFRecAccessWMFRecSetLayout;           break;
+	case WmfRecordTypeResizePalette:        pRecAccess = new EMFRecAccessWMFRecResizePalette;       break;
+	case WmfRecordTypeSaveDC:
+		pRecAccess = new EMFRecAccessWMFRecSaveDC;
+		{
+			EMFGDIState state{ pRecAccess };
+			m_vGDIState.emplace_back(state);
+		}
+		break;
+	case WmfRecordTypeRestoreDC:            pRecAccess = new EMFRecAccessWMFRecRestoreDC;           break;
+	case WmfRecordTypeRealizePalette:       pRecAccess = new EMFRecAccessWMFRecRealizePalette;      break;
+	case WmfRecordTypeLineTo:               pRecAccess = new EMFRecAccessWMFRecLineTo;              break;
+	case WmfRecordTypeMoveTo:               pRecAccess = new EMFRecAccessWMFRecMoveTo;              break;
+	case WmfRecordTypeArc:                  pRecAccess = new EMFRecAccessWMFRecArc;                 break;
+	case WmfRecordTypeChord:                pRecAccess = new EMFRecAccessWMFRecChord;               break;
+	case WmfRecordTypePie:                  pRecAccess = new EMFRecAccessWMFRecPie;                 break;
+	case WmfRecordTypeEllipse:              pRecAccess = new EMFRecAccessWMFRecEllipse;             break;
+	case WmfRecordTypeRectangle:            pRecAccess = new EMFRecAccessWMFRecRectangle;           break;
+	case WmfRecordTypeRoundRect:            pRecAccess = new EMFRecAccessWMFRecRoundRect;           break;
+	case WmfRecordTypeFloodFill:            pRecAccess = new EMFRecAccessWMFRecFloodFill;           break;
+	case WmfRecordTypeExtFloodFill:         pRecAccess = new EMFRecAccessWMFRecExtFloodFill;        break;
+	case WmfRecordTypeSetPixel:             pRecAccess = new EMFRecAccessWMFRecSetPixel;            break;
+	case WmfRecordTypePolygon:              pRecAccess = new EMFRecAccessWMFRecPolygon;             break;
+	case WmfRecordTypePolyline:             pRecAccess = new EMFRecAccessWMFRecPolyline;            break;
+	case WmfRecordTypePolyPolygon:          pRecAccess = new EMFRecAccessWMFRecPolyPolygon;         break;
+	case WmfRecordTypeTextOut:              pRecAccess = new EMFRecAccessWMFRecTextOut;             break;
+	case WmfRecordTypeExtTextOut:           pRecAccess = new EMFRecAccessWMFRecExtTextOut;          break;
+	case WmfRecordTypePatBlt:               pRecAccess = new EMFRecAccessWMFRecPatBlt;              break;
+	case WmfRecordTypeBitBlt:               pRecAccess = new EMFRecAccessWMFRecBitBlt;              break;
+	case WmfRecordTypeStretchBlt:           pRecAccess = new EMFRecAccessWMFRecStretchBlt;          break;
+	case WmfRecordTypeDIBBitBlt:            pRecAccess = new EMFRecAccessWMFRecDIBBitBlt;           break;
+	case WmfRecordTypeDIBStretchBlt:        pRecAccess = new EMFRecAccessWMFRecDIBStretchBlt;       break;
+	case WmfRecordTypeStretchDIB:           pRecAccess = new EMFRecAccessWMFRecStretchDIB;          break;
+	case WmfRecordTypeSetDIBToDev:          pRecAccess = new EMFRecAccessWMFRecSetDIBToDev;         break;
+	case WmfRecordTypeOffsetClipRgn:        pRecAccess = new EMFRecAccessWMFRecOffsetClipRgn;       break;
+	case WmfRecordTypeExcludeClipRect:      pRecAccess = new EMFRecAccessWMFRecExcludeClipRect;     break;
+	case WmfRecordTypeIntersectClipRect:    pRecAccess = new EMFRecAccessWMFRecIntersectClipRect;   break;
+	case WmfRecordTypeSelectObject:         pRecAccess = new EMFRecAccessWMFRecSelectObject;        break;
+	case WmfRecordTypeSelectPalette:        pRecAccess = new EMFRecAccessWMFRecSelectPalette;       break;
+	case WmfRecordTypeSelectClipRegion:     pRecAccess = new EMFRecAccessWMFRecSelectClipRegion;    break;
+	case WmfRecordTypeDeleteObject:         pRecAccess = new EMFRecAccessWMFRecDeleteObject;        break;
+	case WmfRecordTypeFillRegion:           pRecAccess = new EMFRecAccessWMFRecFillRegion;          break;
+	case WmfRecordTypeFrameRegion:          pRecAccess = new EMFRecAccessWMFRecFrameRegion;         break;
+	case WmfRecordTypePaintRegion:          pRecAccess = new EMFRecAccessWMFRecPaintRegion;         break;
+	case WmfRecordTypeInvertRegion:         pRecAccess = new EMFRecAccessWMFRecInvertRegion;        break;
+	case WmfRecordTypeAnimatePalette:       pRecAccess = new EMFRecAccessWMFRecAnimatePalette;      break;
+	case WmfRecordTypeSetPalEntries:        pRecAccess = new EMFRecAccessWMFRecSetPalEntries;       break;
+	case WmfRecordTypeCreatePenIndirect:    pRecAccess = new EMFRecAccessWMFRecCreatePenIndirect;   break;
+	case WmfRecordTypeCreateBrushIndirect:  pRecAccess = new EMFRecAccessWMFRecCreateBrushIndirect; break;
+	case WmfRecordTypeCreateFontIndirect:   pRecAccess = new EMFRecAccessWMFRecCreateFontIndirect;  break;
+	case WmfRecordTypeCreatePalette:        pRecAccess = new EMFRecAccessWMFRecCreatePalette;       break;
+	case WmfRecordTypeCreatePatternBrush:   pRecAccess = new EMFRecAccessWMFRecCreatePatternBrush;  break;
+	case WmfRecordTypeDIBCreatePatternBrush:pRecAccess = new EMFRecAccessWMFRecDIBCreatePatternBrush; break;
+	case WmfRecordTypeCreateRegion:         pRecAccess = new EMFRecAccessWMFRecCreateRegion;        break;
+	case WmfRecordTypeEscape:               pRecAccess = new EMFRecAccessWMFRecEscape;              break;
+	case WmfRecordTypeDrawText:             pRecAccess = new EMFRecAccessWMFRecDrawText;            break;
+	case WmfRecordTypeResetDC:              pRecAccess = new EMFRecAccessWMFRecResetDC;             break;
+	case WmfRecordTypeStartDoc:             pRecAccess = new EMFRecAccessWMFRecStartDoc;            break;
+	case WmfRecordTypeStartPage:            pRecAccess = new EMFRecAccessWMFRecStartPage;           break;
+	case WmfRecordTypeEndPage:              pRecAccess = new EMFRecAccessWMFRecEndPage;             break;
+	case WmfRecordTypeAbortDoc:             pRecAccess = new EMFRecAccessWMFRecAbortDoc;            break;
+	case WmfRecordTypeEndDoc:               pRecAccess = new EMFRecAccessWMFRecEndDoc;              break;
+	case WmfRecordTypeCreateBrush:          pRecAccess = new EMFRecAccessWMFRecCreateBrush;         break;
+	case WmfRecordTypeCreateBitmapIndirect: pRecAccess = new EMFRecAccessWMFRecCreateBitmapIndirect; break;
+	case WmfRecordTypeCreateBitmap:         pRecAccess = new EMFRecAccessWMFRecCreateBitmap;        break;
+	case WmfRecordTypeEOF:                  pRecAccess = new EMFRecAccessWMFRecEOF;                 break;
 	}
 	if (!pRecAccess)
 	{
@@ -911,6 +1000,19 @@ bool EMFAccess::HandleEMFRecord(OEmfPlusRecordType type, UINT flags, UINT dataSi
 			if (nSavedDC < 0 || nSavedDC >= (int)m_vGDIState.size())
 				break;
 			m_vGDIState.resize(nSavedDC);
+		}
+		break;
+	case WmfRecordTypeRestoreDC:
+		if (rec.Data && rec.DataSize >= sizeof(int16_t))
+		{
+			int16_t nSavedDC = 0;
+			memcpy(&nSavedDC, rec.Data, sizeof(int16_t));
+			int target = nSavedDC;
+			if (target < 0)
+				target = (int)m_vGDIState.size() + target;
+			if (target < 0 || target >= (int)m_vGDIState.size())
+				break;
+			m_vGDIState.resize(target);
 		}
 		break;
 	case EmfPlusRecordTypeRestore:
@@ -940,6 +1042,27 @@ EMFRecAccess* EMFAccess::GetObjectCreationRecord(size_t index, bool bPlus) const
 			return m_vGDIObjTable[index].pRec;
 	}
 	return nullptr;
+}
+
+size_t EMFAccess::AddWMFObject(EMFRecAccess* pRec)
+{
+	for (size_t i = 0; i < m_vGDIObjTable.size(); ++i)
+	{
+		if (!m_vGDIObjTable[i].pRec)
+		{
+			m_vGDIObjTable[i].pRec = pRec;
+			return i;
+		}
+	}
+	EMFGDIObjInfo info{ pRec };
+	m_vGDIObjTable.emplace_back(info);
+	return m_vGDIObjTable.size() - 1;
+}
+
+void EMFAccess::ClearWMFObject(size_t index)
+{
+	if (index < m_vGDIObjTable.size())
+		m_vGDIObjTable[index].pRec = nullptr;
 }
 
 bool EMFAccess::SetObjectToTable(size_t index, EMFRecAccess* pRec, bool bPlus)

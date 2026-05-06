@@ -232,6 +232,91 @@ namespace emfplus
 
 		EmfPlusRecordTypeMax = EmfPlusRecordTotal-1,
 		EmfPlusRecordTypeMin = EmfPlusRecordTypeHeader,
+
+		// WMF records (function code | GDIP_WMF_RECORD_BASE).
+		// GDI+ reports these from EnumerateMetafile() when the source is a WMF file.
+		WmfRecordBase                   = 0x00010000,
+
+		WmfRecordTypeSetBkColor         = 0x00010201,
+		WmfRecordTypeSetBkMode          = 0x00010102,
+		WmfRecordTypeSetMapMode         = 0x00010103,
+		WmfRecordTypeSetROP2            = 0x00010104,
+		WmfRecordTypeSetRelAbs          = 0x00010105,
+		WmfRecordTypeSetPolyFillMode    = 0x00010106,
+		WmfRecordTypeSetStretchBltMode  = 0x00010107,
+		WmfRecordTypeSetTextCharExtra   = 0x00010108,
+		WmfRecordTypeSetTextColor       = 0x00010209,
+		WmfRecordTypeSetTextJustification = 0x0001020A,
+		WmfRecordTypeSetWindowOrg       = 0x0001020B,
+		WmfRecordTypeSetWindowExt       = 0x0001020C,
+		WmfRecordTypeSetViewportOrg     = 0x0001020D,
+		WmfRecordTypeSetViewportExt     = 0x0001020E,
+		WmfRecordTypeOffsetWindowOrg    = 0x0001020F,
+		WmfRecordTypeScaleWindowExt     = 0x00010410,
+		WmfRecordTypeOffsetViewportOrg  = 0x00010211,
+		WmfRecordTypeScaleViewportExt   = 0x00010412,
+		WmfRecordTypeLineTo             = 0x00010213,
+		WmfRecordTypeMoveTo             = 0x00010214,
+		WmfRecordTypeExcludeClipRect    = 0x00010415,
+		WmfRecordTypeIntersectClipRect  = 0x00010416,
+		WmfRecordTypeArc                = 0x00010817,
+		WmfRecordTypeEllipse            = 0x00010418,
+		WmfRecordTypeFloodFill          = 0x00010419,
+		WmfRecordTypePie                = 0x0001081A,
+		WmfRecordTypeRectangle          = 0x0001041B,
+		WmfRecordTypeRoundRect          = 0x0001061C,
+		WmfRecordTypePatBlt             = 0x0001061D,
+		WmfRecordTypeSaveDC             = 0x0001001E,
+		WmfRecordTypeSetPixel           = 0x0001041F,
+		WmfRecordTypeOffsetClipRgn      = 0x00010220,
+		WmfRecordTypeTextOut            = 0x00010521,
+		WmfRecordTypeBitBlt             = 0x00010922,
+		WmfRecordTypeStretchBlt         = 0x00010B23,
+		WmfRecordTypePolygon            = 0x00010324,
+		WmfRecordTypePolyline           = 0x00010325,
+		WmfRecordTypeEscape             = 0x00010626,
+		WmfRecordTypeRestoreDC          = 0x00010127,
+		WmfRecordTypeFillRegion         = 0x00010228,
+		WmfRecordTypeFrameRegion        = 0x00010429,
+		WmfRecordTypeInvertRegion       = 0x0001012A,
+		WmfRecordTypePaintRegion        = 0x0001012B,
+		WmfRecordTypeSelectClipRegion   = 0x0001012C,
+		WmfRecordTypeSelectObject       = 0x0001012D,
+		WmfRecordTypeSetTextAlign       = 0x0001012E,
+		WmfRecordTypeDrawText           = 0x0001062F,	// Reserved
+		WmfRecordTypeChord              = 0x00010830,
+		WmfRecordTypeSetMapperFlags     = 0x00010231,
+		WmfRecordTypeExtTextOut         = 0x00010A32,
+		WmfRecordTypeSetDIBToDev        = 0x00010D33,
+		WmfRecordTypeSelectPalette      = 0x00010234,
+		WmfRecordTypeRealizePalette     = 0x00010035,
+		WmfRecordTypeAnimatePalette     = 0x00010436,
+		WmfRecordTypeSetPalEntries      = 0x00010037,
+		WmfRecordTypePolyPolygon        = 0x00010538,
+		WmfRecordTypeResizePalette      = 0x00010139,
+		WmfRecordTypeDIBBitBlt          = 0x00010940,
+		WmfRecordTypeDIBStretchBlt      = 0x00010B41,
+		WmfRecordTypeDIBCreatePatternBrush = 0x00010142,
+		WmfRecordTypeStretchDIB         = 0x00010F43,
+		WmfRecordTypeExtFloodFill       = 0x00010548,
+		WmfRecordTypeSetLayout          = 0x00010149,
+		WmfRecordTypeResetDC            = 0x0001014C,	// Reserved
+		WmfRecordTypeStartDoc           = 0x0001014D,	// Reserved
+		WmfRecordTypeStartPage          = 0x0001004F,	// Reserved
+		WmfRecordTypeEndPage            = 0x00010050,	// Reserved
+		WmfRecordTypeAbortDoc           = 0x00010052,	// Reserved
+		WmfRecordTypeEndDoc             = 0x0001005E,	// Reserved
+		WmfRecordTypeDeleteObject       = 0x000101F0,
+		WmfRecordTypeCreatePalette      = 0x000100F7,
+		WmfRecordTypeCreateBrush        = 0x000100F8,	// Reserved
+		WmfRecordTypeCreatePatternBrush = 0x000101F9,
+		WmfRecordTypeCreatePenIndirect  = 0x000102FA,
+		WmfRecordTypeCreateFontIndirect = 0x000102FB,
+		WmfRecordTypeCreateBrushIndirect = 0x000102FC,
+		WmfRecordTypeCreateBitmapIndirect = 0x000102FD,	// Reserved
+		WmfRecordTypeCreateBitmap       = 0x000106FE,	// Reserved
+		WmfRecordTypeCreateRegion       = 0x000106FF,
+		WmfRecordTypeEOF                = 0x00010000,
 	};
 
 enum {

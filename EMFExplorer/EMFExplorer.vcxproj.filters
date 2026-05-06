@@ -81,6 +81,15 @@
     <ClInclude Include="EmfStruct.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="EMFRecAccessWMF.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EMFRecAccessGDITextHelpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WmfStruct.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EMFExplorer.cpp">
@@ -132,6 +141,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="EmfStruct.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EMFRecAccessWMF.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -4,35 +4,10 @@
 #include "EMFAccess.h"
 #include "EMFStruct2Props.h"
 #include "EmfStruct.h"
+#include "EMFRecAccessGDITextHelpers.h"
 
 #undef min
 #undef max
-
-// Forward declarations for enum/flag text helpers
-static CStringW MapModeText(DWORD iMode);
-static CStringW BkModeText(DWORD iMode);
-static CStringW PolyFillModeText(DWORD iMode);
-static CStringW ROP2Text(DWORD iMode);
-static CStringW StretchBltModeText(DWORD iMode);
-static CStringW TextAlignText(DWORD iMode);
-static CStringW ArcDirectionText(DWORD iArcDirection);
-static CStringW RegionModeText(DWORD iMode);
-static CStringW ModifyWorldTransformModeText(DWORD iMode);
-static CStringW FloodFillModeText(DWORD iMode);
-static CStringW GradientFillModeText(DWORD ulMode);
-static CStringW BrushStyleText(DWORD lbStyle);
-static CStringW HatchStyleText(DWORD lbHatch);
-static CStringW PenStyleText(DWORD lopnStyle);
-static CStringW ExtPenStyleText(DWORD elpPenStyle);
-static CStringW FontWeightText(LONG lfWeight);
-static CStringW CharSetText(BYTE lfCharSet);
-static CStringW FontQualityText(BYTE lfQuality);
-static CStringW GraphicsModeText(UINT iGraphicsMode);
-static CStringW RasterOpText(DWORD dwRop);
-static CStringW BlendFunctionText(DWORD dwRop);
-static CStringW DIBColorsText(DWORD iUsage);
-static CStringW BiCompressionText(DWORD biCompression);
-static CStringW ExtTextOutOptionsText(UINT fuOptions);
 
 const ENHMETARECORD* EMFRecAccessGDIRec::GetGDIRecord(const emfplus::OEmfPlusRecInfo& rec)
 {
@@ -1782,7 +1757,7 @@ struct EMRSMALLTEXTOUT_DATA
 #define ETO_NO_RECT     0x100
 #define ETO_SMALL_CHARS 0x200
 
-static CStringW MapModeText(DWORD iMode)
+CStringW MapModeText(DWORD iMode)
 {
 	CStringW str;
 	str.Format(L"%u", iMode);
@@ -1802,7 +1777,7 @@ static CStringW MapModeText(DWORD iMode)
 	return str;
 }
 
-static CStringW BkModeText(DWORD iMode)
+CStringW BkModeText(DWORD iMode)
 {
 	CStringW str;
 	str.Format(L"%u", iMode);
@@ -1811,7 +1786,7 @@ static CStringW BkModeText(DWORD iMode)
 	return str;
 }
 
-static CStringW PolyFillModeText(DWORD iMode)
+CStringW PolyFillModeText(DWORD iMode)
 {
 	CStringW str;
 	str.Format(L"%u", iMode);
@@ -1820,7 +1795,7 @@ static CStringW PolyFillModeText(DWORD iMode)
 	return str;
 }
 
-static CStringW ROP2Text(DWORD iMode)
+CStringW ROP2Text(DWORD iMode)
 {
 	CStringW str;
 	str.Format(L"%u", iMode);
@@ -1848,7 +1823,7 @@ static CStringW ROP2Text(DWORD iMode)
 	return str;
 }
 
-static CStringW StretchBltModeText(DWORD iMode)
+CStringW StretchBltModeText(DWORD iMode)
 {
 	CStringW str;
 	str.Format(L"%u", iMode);
@@ -1864,7 +1839,7 @@ static CStringW StretchBltModeText(DWORD iMode)
 	return str;
 }
 
-static CStringW TextAlignText(DWORD iMode)
+CStringW TextAlignText(DWORD iMode)
 {
 	CStringW str;
 	str.Format(L"0x%04X", iMode);
@@ -1887,7 +1862,7 @@ static CStringW TextAlignText(DWORD iMode)
 	return str;
 }
 
-static CStringW ArcDirectionText(DWORD iArcDirection)
+CStringW ArcDirectionText(DWORD iArcDirection)
 {
 	CStringW str;
 	str.Format(L"%u", iArcDirection);
@@ -1896,7 +1871,7 @@ static CStringW ArcDirectionText(DWORD iArcDirection)
 	return str;
 }
 
-static CStringW RegionModeText(DWORD iMode)
+CStringW RegionModeText(DWORD iMode)
 {
 	CStringW str;
 	str.Format(L"%u", iMode);
@@ -1913,7 +1888,7 @@ static CStringW RegionModeText(DWORD iMode)
 	return str;
 }
 
-static CStringW ModifyWorldTransformModeText(DWORD iMode)
+CStringW ModifyWorldTransformModeText(DWORD iMode)
 {
 	CStringW str;
 	str.Format(L"%u", iMode);
@@ -1928,7 +1903,7 @@ static CStringW ModifyWorldTransformModeText(DWORD iMode)
 	return str;
 }
 
-static CStringW FloodFillModeText(DWORD iMode)
+CStringW FloodFillModeText(DWORD iMode)
 {
 	CStringW str;
 	str.Format(L"%u", iMode);
@@ -1937,7 +1912,7 @@ static CStringW FloodFillModeText(DWORD iMode)
 	return str;
 }
 
-static CStringW GradientFillModeText(DWORD ulMode)
+CStringW GradientFillModeText(DWORD ulMode)
 {
 	CStringW str;
 	str.Format(L"%u", ulMode);
@@ -1952,7 +1927,7 @@ static CStringW GradientFillModeText(DWORD ulMode)
 	return str;
 }
 
-static CStringW BrushStyleText(DWORD lbStyle)
+CStringW BrushStyleText(DWORD lbStyle)
 {
 	CStringW str;
 	str.Format(L"%u", lbStyle);
@@ -1970,7 +1945,7 @@ static CStringW BrushStyleText(DWORD lbStyle)
 	return str;
 }
 
-static CStringW HatchStyleText(DWORD lbHatch)
+CStringW HatchStyleText(DWORD lbHatch)
 {
 	CStringW str;
 	str.Format(L"%u", lbHatch);
@@ -1995,7 +1970,7 @@ static CStringW HatchStyleText(DWORD lbHatch)
 	return str;
 }
 
-static CStringW PenStyleText(DWORD lopnStyle)
+CStringW PenStyleText(DWORD lopnStyle)
 {
 	CStringW str;
 	str.Format(L"%u", lopnStyle);
@@ -2014,7 +1989,7 @@ static CStringW PenStyleText(DWORD lopnStyle)
 	return str;
 }
 
-static CStringW ExtPenStyleText(DWORD elpPenStyle)
+CStringW ExtPenStyleText(DWORD elpPenStyle)
 {
 	CStringW str;
 	str.Format(L"0x%08X", elpPenStyle);
@@ -2055,7 +2030,7 @@ static CStringW ExtPenStyleText(DWORD elpPenStyle)
 	return str;
 }
 
-static CStringW FontWeightText(LONG lfWeight)
+CStringW FontWeightText(LONG lfWeight)
 {
 	CStringW str;
 	str.Format(L"%d", lfWeight);
@@ -2076,7 +2051,7 @@ static CStringW FontWeightText(LONG lfWeight)
 	return str;
 }
 
-static CStringW CharSetText(BYTE lfCharSet)
+CStringW CharSetText(BYTE lfCharSet)
 {
 	CStringW str;
 	str.Format(L"%u", lfCharSet);
@@ -2107,7 +2082,7 @@ static CStringW CharSetText(BYTE lfCharSet)
 	return str;
 }
 
-static CStringW FontQualityText(BYTE lfQuality)
+CStringW FontQualityText(BYTE lfQuality)
 {
 	CStringW str;
 	str.Format(L"%u", lfQuality);
@@ -2126,7 +2101,7 @@ static CStringW FontQualityText(BYTE lfQuality)
 	return str;
 }
 
-static CStringW ExtTextOutOptionsText(UINT fuOptions)
+CStringW ExtTextOutOptionsText(UINT fuOptions)
 {
 	CStringW str;
 	str.Format(L"0x%08X", fuOptions);
@@ -2152,7 +2127,7 @@ static CStringW ExtTextOutOptionsText(UINT fuOptions)
 	return str;
 }
 
-static CStringW GraphicsModeText(UINT iGraphicsMode)
+CStringW GraphicsModeText(UINT iGraphicsMode)
 {
 	CStringW str;
 	str.Format(L"%u", iGraphicsMode);
@@ -2163,7 +2138,7 @@ static CStringW GraphicsModeText(UINT iGraphicsMode)
 	return str;
 }
 
-static CStringW RasterOpText(DWORD dwRop)
+CStringW RasterOpText(DWORD dwRop)
 {
 	CStringW str;
 	// Check for high-bit flags first
@@ -2214,7 +2189,7 @@ static CStringW RasterOpText(DWORD dwRop)
 	return str;
 }
 
-static CStringW BlendFunctionText(DWORD dwRop)
+CStringW BlendFunctionText(DWORD dwRop)
 {
 	// dwRop is a packed BLENDFUNCTION: byte 0=BlendOp, 1=BlendFlags, 2=SourceConstantAlpha, 3=AlphaFormat
 	BYTE blendOp = (BYTE)(dwRop & 0xFF);
@@ -2245,7 +2220,7 @@ static CStringW BlendFunctionText(DWORD dwRop)
 	return str;
 }
 
-static CStringW DIBColorsText(DWORD iUsage)
+CStringW DIBColorsText(DWORD iUsage)
 {
 	CStringW str;
 	str.Format(L"%u", iUsage);
@@ -2256,7 +2231,7 @@ static CStringW DIBColorsText(DWORD iUsage)
 	return str;
 }
 
-static CStringW BiCompressionText(DWORD biCompression)
+CStringW BiCompressionText(DWORD biCompression)
 {
 	CStringW str;
 	str.Format(L"%u", biCompression);
