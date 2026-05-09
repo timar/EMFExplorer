@@ -92,7 +92,7 @@ BEGIN_MESSAGE_MAP(CEMFExplorerApp, CWinAppEx)
 	ON_COMMAND(ID_APP_ABOUT, &CEMFExplorerApp::OnAppAbout)
 	// Standard file based document commands
 	ON_COMMAND(ID_FILE_NEW, &CWinAppEx::OnFileNew)
-	ON_COMMAND(ID_FILE_OPEN, &CWinAppEx::OnFileOpen)
+	ON_COMMAND(ID_FILE_OPEN, &CEMFExplorerApp::OnFileOpen)
 END_MESSAGE_MAP()
 
 
@@ -261,6 +261,23 @@ void CEMFExplorerApp::OnAppAbout()
 {
 	CAboutDlg aboutDlg;
 	aboutDlg.DoModal();
+}
+
+void CEMFExplorerApp::OnFileOpen()
+{
+	// Custom multi-extension filter so the dialog accepts both .emf and .wmf.
+	// MFC's default OnFileOpen builds the filter from the doc-template string,
+	// which only supports a single extension per entry.
+	LPCTSTR szFilter =
+		_T("Metafiles (*.emf;*.wmf)|*.emf;*.wmf|")
+		_T("Enhanced Metafile (*.emf)|*.emf|")
+		_T("Windows Metafile (*.wmf)|*.wmf|")
+		_T("All Files (*.*)|*.*||");
+	CFileDialog dlg(TRUE, _T("emf"), nullptr,
+		OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST,
+		szFilter);
+	if (dlg.DoModal() == IDOK)
+		OpenDocumentFile(dlg.GetPathName());
 }
 
 void CEMFExplorerApp::DoEditPaste()
